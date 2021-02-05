@@ -1,0 +1,101 @@
+<template>
+    <div class="slds-align_absolute-center" data-id="MainAligner">
+        <div data-id="MainHolder">
+            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade" data-id="MainComponent">
+                <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
+                    <template if:true={isKnownOpportunity}>
+                        Survey
+                    </template>
+
+
+                    <template if:false={isKnownOpportunity}>
+                        Find Opportunity
+                    </template>
+                </div>
+
+
+                <div class="slds-size_large slds-box slds-box_xx-small">
+                    <template if:true={isKnownOpportunity}>
+                        <div class="slds-text-body_regular">
+                            Fill out the survey below. Be sure that . . .
+                        </div>
+                    </template>
+
+
+                    <template if:false={isKnownOpportunity}>
+                        <div class="slds-text-body_regular">
+                            Enter the name of an Opportunity to open a survey for it.
+                        </div>
+
+                        <div>
+                            . . .
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="slds-align_absolute-center" data-id="ViewerAligner">
+        <div data-id="ViewHolder">
+            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade" data-id="ViewOpportunityComponent">
+                <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
+                    Opportunity
+                </div>
+
+                <div class="slds-size_medium slds-box slds-box_xx-small">
+                    <template if:true={isKnownOpportunity}>
+
+                    </template>
+
+
+                    <template if:false={isKnownOpportunity}>
+                        <div class="slds-text-body_regular">
+                            Enter an Opportunity above to display its record here.
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+
+            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade" data-id="ViewProductsComponent">
+                <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
+                    Products
+                </div>
+
+                <div class="slds-size_medium slds-box slds-box_xx-small">
+                    <template if:true={isKnownOpportunity}>
+
+                    </template>
+
+
+                    <template if:false={isKnownOpportunity}>
+                        <div class="slds-text-body_regular">
+                            Enter an Opportunity above to display the products that were sold here.
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade" data-id="ViewContactComponent">
+                <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
+                    Contact
+                </div>
+
+                <div class="slds-size_medium slds-box slds-box_xx-small">
+                    <template if:true={isKnownOpportunity}>
+
+                    </template>
+
+
+                    <template if:false={isKnownOpportunity}>
+                        <div class="slds-text-body_regular">
+                            Enter an Opportunity above to display the contact information of the associated account here.
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
