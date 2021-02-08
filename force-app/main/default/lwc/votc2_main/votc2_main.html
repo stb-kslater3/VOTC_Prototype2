@@ -3,32 +3,41 @@
         <div data-id="MainHolder">
             <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade" data-id="MainComponent">
                 <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
-                    <template if:true={isKnownOpportunity}>
+                    <template if:true={isKnown_Opportunity}>
                         Survey
                     </template>
 
 
-                    <template if:false={isKnownOpportunity}>
+                    <template if:false={isKnown_Opportunity}>
                         Find Opportunity
                     </template>
                 </div>
 
 
                 <div class="slds-size_large slds-box slds-box_xx-small">
-                    <template if:true={isKnownOpportunity}>
+                    <template if:true={isKnown_Opportunity}>
                         <div class="slds-text-body_regular">
                             Fill out the survey below. Be sure that . . .
                         </div>
                     </template>
 
 
-                    <template if:false={isKnownOpportunity}>
+                    <template if:false={isKnown_Opportunity}>
                         <div class="slds-text-body_regular">
                             Enter the name of an Opportunity to open a survey for it.
                         </div>
 
                         <div>
-                            . . .
+                            <lightning-record-edit-form
+                                object-api-name="VOTC_Survey__c">
+
+                                <lightning-input-field
+                                    field-name="Opportunity__c"
+                                    data-id="OpportunityLookup">
+
+                                </lightning-input-field>
+
+                            </lightning-record-edit-form>
                         </div>
                     </template>
                 </div>
@@ -45,12 +54,44 @@
                 </div>
 
                 <div class="slds-size_medium slds-box slds-box_xx-small">
-                    <template if:true={isKnownOpportunity}>
+                    <template if:true={isKnown_Opportunity}>
+                        <div class="">
+                            <div class="slds-text-body_regular">
+                                Name
+                            </div>
 
+                            <lightning-formatted-url
+                                value="Opportunity URL Here"
+                                label="Opportunity Name Here"
+                                target="_blank">
+                            </lightning-formatted-url>
+                        </div>
+
+                        <div class="slds-m-top_small">
+                            <div class="slds-text-body_regular">
+                                Opportunity Owner
+                            </div>
+
+                            <lightning-formatted-url
+                                value="Opportunity Owner URL Here"
+                                label="Opportunity Owner Name Here"
+                                target="_blank">
+                            </lightning-formatted-url>
+                        </div>
+
+                        <div class="slds-m-top_small">
+                            <div class="slds-text-body_regular">
+                                Close Date
+                            </div>
+
+                            <lightning-formatted-date-time
+                                value="2077-11-05">
+                            </lightning-formatted-date-time>
+                        </div>
                     </template>
 
 
-                    <template if:false={isKnownOpportunity}>
+                    <template if:false={isKnown_Opportunity}>
                         <div class="slds-text-body_regular">
                             Enter an Opportunity above to display its record here.
                         </div>
@@ -65,12 +106,20 @@
                 </div>
 
                 <div class="slds-size_medium slds-box slds-box_xx-small">
-                    <template if:true={isKnownOpportunity}>
+                    <template if:true={isKnown_Opportunity}>
+                        <template if:true={hasProducts}>
 
+                        </template>
+
+                        <template if:false={hasProducts}>
+                            <div class="slds-text-body_regular">
+                                No products to display for this Opportunity.
+                            </div>
+                        </template>
                     </template>
 
 
-                    <template if:false={isKnownOpportunity}>
+                    <template if:false={isKnown_Opportunity}>
                         <div class="slds-text-body_regular">
                             Enter an Opportunity above to display the products that were sold here.
                         </div>
@@ -84,12 +133,12 @@
                 </div>
 
                 <div class="slds-size_medium slds-box slds-box_xx-small">
-                    <template if:true={isKnownOpportunity}>
+                    <template if:true={isKnown_Opportunity}>
 
                     </template>
 
 
-                    <template if:false={isKnownOpportunity}>
+                    <template if:false={isKnown_Opportunity}>
                         <div class="slds-text-body_regular">
                             Enter an Opportunity above to display the contact information of the associated account here.
                         </div>
