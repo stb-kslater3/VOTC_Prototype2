@@ -1,6 +1,10 @@
 import { LightningElement, track } from 'lwc';
 
 
+import getRecordFromId from '@salesforce/apex/ApexDataInterface.getRecordFromId';
+import insertRecord from '@salesforce/apex/ApexDataInterface.insertRecord';
+
+
 class FieldElement {
     objectName;
 
@@ -43,6 +47,10 @@ export default class Votc2_main extends LightningElement {
     @track isKnown_Opportunity;
 
     @track fieldElements;
+    surveyFieldIds;
+    opportunityFieldIds;
+    productsFieldIds;
+    contactFieldIds;
 
     isHandled_URL;
 TEMPID;
@@ -50,8 +58,20 @@ TEMPID;
     hasProducts;
 
 
-    getSurveyData() {
+    constructor() {
+        this.surveyFieldIds = ['Paint_Checkbox', 'Paint_Comments', 'Appearance_Checkbox', 'Appearance_Comments', 'Electrical_Checkbox', 'Electrical_Comments', 'Hydraulics_Checkbox', 'Hydraulics_Comments', 'Functionality_Checkbox', 'Functionality_Comments', 'Comments'];
+    }
 
+
+    getSurveyData() {
+        let fields = [];
+        this.surveyFieldIds.forEach(id => {
+            fields.push(this.fieldElements[id].dataId);
+        });
+
+        getRecordFromId('VOTC_Survey__c', ) {
+
+        }
     }
 
 
@@ -63,7 +83,7 @@ TEMPID;
         
     }
 
-    getAccountData() {
+    getContactData() {
         
     }
 
