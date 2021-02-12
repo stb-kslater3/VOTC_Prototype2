@@ -1,7 +1,7 @@
 <template>
-    <div class="slds-align_absolute-center" data-id="MainAligner">
-        <div data-id="MainHolder">
-            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade" data-id="MainComponent">
+    <div class="slds-align_absolute-center">
+        <div>
+            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
                 <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
                     <template if:true={isKnown_Opportunity}>
                         Survey
@@ -14,10 +14,56 @@
                 </div>
 
 
-                <div class="slds-size_large slds-box slds-box_xx-small">
+                <div>
                     <template if:true={isKnown_Opportunity}>
-                        <div class="slds-text-body_regular">
+                        <div class="slds-text-heading_small">
                             Fill out the survey below. Be sure that . . .
+                        </div>
+
+                        <div class="slds-clearfix slds-m-top_medium">
+                            <div class="slds-float_left slds-m-around_small slds-box slds-box_xx-small">
+                                <lightning-input type="checkbox" label="Paint" data-id="Paint_Checkbox"></lightning-input>
+
+                                <div class="slds-m-top_small">
+                                    <lightning-textarea label="Comments" data-id="Paint_Comments"></lightning-textarea>
+                                </div>
+                            </div>
+
+                            <div class="slds-float_left slds-m-around_small slds-box slds-box_xx-small">
+                                <lightning-input type="checkbox" label="Appearance" data-id="Appearance_Checkbox"></lightning-input>
+
+                                <div class="slds-m-top_small">
+                                    <lightning-textarea label="Comments" data-id="Appearance_Comments"></lightning-textarea>
+                                </div>
+                            </div>
+
+                            <div class="slds-float_left slds-m-around_small slds-box slds-box_xx-small">
+                                <lightning-input type="checkbox" label="Electrical" data-id="Electrical_Checkbox"></lightning-input>
+
+                                <div class="slds-m-top_small">
+                                    <lightning-textarea label="Comments" data-id="Electrical_Comments"></lightning-textarea>
+                                </div>
+                            </div>
+
+                            <div class="slds-float_left slds-m-around_small slds-box slds-box_xx-small">
+                                <lightning-input type="checkbox" label="Hydraulics" data-id="Hydraulics_Checkbox"></lightning-input>
+
+                                <div class="slds-m-top_small">
+                                    <lightning-textarea label="Comments" data-id="Hydraulics_Comments"></lightning-textarea>
+                                </div>
+                            </div>
+
+                            <div class="slds-float_left slds-m-around_small slds-box slds-box_xx-small">
+                                <lightning-input type="checkbox" label="Functionality" data-id="Functionality_Checkbox"></lightning-input>
+
+                                <div class="slds-m-top_small">
+                                    <lightning-textarea label="Comments" data-id="Functionality_Comments"></lightning-textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="slds-m-top_medium">
+                            <lightning-textarea label="Comments" data-id="Comments"></lightning-textarea>
                         </div>
                     </template>
 
@@ -46,9 +92,9 @@
     </div>
 
 
-    <div class="slds-align_absolute-center" data-id="ViewerAligner">
-        <div data-id="ViewHolder">
-            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade" data-id="ViewOpportunityComponent">
+    <div class="slds-align_absolute-center">
+        <div>
+            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
                 <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
                     Opportunity
                 </div>
@@ -100,7 +146,7 @@
             </div>
 
 
-            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade" data-id="ViewProductsComponent">
+            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
                 <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
                     Products
                 </div>
@@ -127,7 +173,7 @@
                 </div>
             </div>
 
-            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade" data-id="ViewContactComponent">
+            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
                 <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
                     Contact
                 </div>
