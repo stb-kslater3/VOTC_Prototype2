@@ -32,6 +32,12 @@ class VisibleFieldElement extends FieldElement {
     }
 }
 
+class InputFieldElement extends VisibleFieldElement {
+    constructor(objectName, fieldName, dataId, options={}) {
+        super(objectName, fieldName, dataId, options={});
+    }
+}
+
 
 export default class Votc2_main extends LightningElement {
     @track isKnown_Opportunity;
@@ -44,27 +50,54 @@ TEMPID;
     hasProducts;
 
 
+    getSurveyData() {
+
+    }
+
+
+    getOpportunityData() {
+
+    }
+
+    getProductsData() {
+        
+    }
+
+    getAccountData() {
+        
+    }
+
 
     connectedCallback() {
         if(!this.fieldElements) {
             this.fieldElements = {};
             
-            this.fieldElements['Paint_Checkbox'] = new VisibleFieldElement('VOTC_Survey__c', 'Paint__c', 'Paint_Checkbox');
-            this.fieldElements['Paint_Comments'] = new VisibleFieldElement('VOTC_Survey__c', 'Paint_Comment__c', 'Paint_Comments');
+        // SURVEY FIELDS
+            this.fieldElements['Paint_Checkbox'] = new InputFieldElement('VOTC_Survey__c', 'Paint__c', 'Paint_Checkbox');
+            this.fieldElements['Paint_Comments'] = new InputFieldElement('VOTC_Survey__c', 'Paint_Comment__c', 'Paint_Comments');
 
-            this.fieldElements['Appearance_Checkbox'] = new VisibleFieldElement('VOTC_Survey__c', 'Appearance__c', 'Appearance_Checkbox');
-            this.fieldElements['Appearance_Comments'] = new VisibleFieldElement('VOTC_Survey__c', 'Appearance_Comment__c', 'Appearance_Comments');
+            this.fieldElements['Appearance_Checkbox'] = new InputFieldElement('VOTC_Survey__c', 'Appearance__c', 'Appearance_Checkbox');
+            this.fieldElements['Appearance_Comments'] = new InputFieldElement('VOTC_Survey__c', 'Appearance_Comment__c', 'Appearance_Comments');
 
-            this.fieldElements['Electrical_Checkbox'] = new VisibleFieldElement('VOTC_Survey__c', 'Electrical__c', 'Electrical_Checkbox');
-            this.fieldElements['Electrical_Comments'] = new VisibleFieldElement('VOTC_Survey__c', 'Electrical_Comment__c', 'Electrical_Comments');
+            this.fieldElements['Electrical_Checkbox'] = new InputFieldElement('VOTC_Survey__c', 'Electrical__c', 'Electrical_Checkbox');
+            this.fieldElements['Electrical_Comments'] = new InputFieldElement('VOTC_Survey__c', 'Electrical_Comment__c', 'Electrical_Comments');
 
-            this.fieldElements['Hydraulics_Checkbox'] = new VisibleFieldElement('VOTC_Survey__c', 'Unfaulty__c', 'Hydraulics_Checkbox');
-            this.fieldElements['Hydraulics_Comments'] = new VisibleFieldElement('VOTC_Survey__c', 'Unfaulty_Comment__c', 'Hydraulics_Comments');
+            this.fieldElements['Hydraulics_Checkbox'] = new InputFieldElement('VOTC_Survey__c', 'Unfaulty__c', 'Hydraulics_Checkbox');
+            this.fieldElements['Hydraulics_Comments'] = new InputFieldElement('VOTC_Survey__c', 'Unfaulty_Comment__c', 'Hydraulics_Comments');
 
-            this.fieldElements['Functionality_Checkbox'] = new VisibleFieldElement('VOTC_Survey__c', 'Functionality__c', 'Functionality_Checkbox');
-            this.fieldElements['Functionality_Comments'] = new VisibleFieldElement('VOTC_Survey__c', 'Functionality_Comment__c', 'Functionality_Comments');
+            this.fieldElements['Functionality_Checkbox'] = new InputFieldElement('VOTC_Survey__c', 'Functionality__c', 'Functionality_Checkbox');
+            this.fieldElements['Functionality_Comments'] = new InputFieldElement('VOTC_Survey__c', 'Functionality_Comment__c', 'Functionality_Comments');
 
-            this.fieldElements['Comments'] = new VisibleFieldElement('VOTC_Survey__c', 'Comments__c', 'Comments');
+            this.fieldElements['Comments'] = new InputFieldElement('VOTC_Survey__c', 'Comments__c', 'Comments');
+
+
+        // OPPORTUNITY FIELDS
+            this.fieldElements['Opportunity_Name'] = new VisibleFieldElement('Opportunity', 'Name', 'Opportunity_Name');
+
+            this.fieldElements['Opportunity_Owner'] = new VisibleFieldElement('Opportunity', 'OwnerId', 'Opportunity_Owner');
+
+            this.fieldElements['Opportunity_CloseDate'] = new VisibleFieldElement('Opportunity', 'CloseDate', 'Opportunity_CloseDate');
+
         }
 
 
@@ -85,7 +118,9 @@ TEMPID;
                 if(this.fieldElements[element] instanceof VisibleFieldElement) {
                     this.fieldElements[element].domElement = this.template.querySelector("[data-id='" + this.fieldElements[element].dataId + "']");
 
-                    this.fieldElements[element].domElement.addEventListener("change", this.handleInput.bind(this));
+                    if(this.fieldElements[element] instanceof InputFieldElement) {
+                        this.fieldElements[element].domElement.addEventListener("change", this.handleInput.bind(this));
+                    }
                 }
             }
         }
@@ -93,6 +128,13 @@ TEMPID;
 
 
     handleInput(event) {
+        if(event.target.getAttribute("data-id").includes('Checkbox')) {
+            this.fieldElements[event.target.getAttribute("data-id")].value = this.fieldElements[event.target.getAttribute("data-id")].domElement.checked;
+        }else {
+            this.fieldElements[event.target.getAttribute("data-id")].value = this.fieldElements[event.target.getAttribute("data-id")].domElement.value;
+        }
+
+
         switch(event.target.getAttribute("data-id")) {
             case 'Paint_Checkbox':
 console.log(this.fieldElements['Paint_Checkbox'].domElement.checked);
