@@ -183,7 +183,51 @@
 
                 <div class="slds-size_medium slds-box slds-box_xx-small">
                     <template if:true={isKnown_Opportunity}>
+                        <div class="">
+                            <div class="slds-text-body_regular">
+                                Contact Name
+                            </div>
 
+                            <lightning-formatted-url
+                                value="Contact URL Here"
+                                label="Contact Name Here"
+                                target="_blank"
+                                data-id="Contact_Name">
+                            </lightning-formatted-url>
+                        </div>
+
+                        <div class="slds-m-top_small">
+                            <div class="slds-text-body_regular">
+                                Contact Phone
+                            </div>
+
+                            <lightning-formatted-phone
+                                value="Contact PhoneNumber Here"
+                                data-id="Contact_Phone">
+                            </lightning-formatted-phone>
+                        </div>
+
+                        <div class="slds-m-top_small">
+                            <div class="slds-text-body_regular">
+                                Contact Billing Address
+                            </div>
+
+                            <lightning-formatted-address
+                                value="Contact Billing Address Here"
+                                data-id="Contact_Billing_Address">
+                            </lightning-formatted-address>
+                        </div>
+
+                        <div class="slds-m-top_small">
+                            <div class="slds-text-body_regular">
+                                Contact Shipping Address
+                            </div>
+
+                            <lightning-formatted-address
+                                value="Contact Shipping Address Here"
+                                data-id="Contact_Shipping_Address">
+                            </lightning-formatted-address>
+                        </div>
                     </template>
 
 

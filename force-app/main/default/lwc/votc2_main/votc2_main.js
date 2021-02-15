@@ -11,11 +11,14 @@ class FieldElement {
     fieldName;
     helperFields;
 
+    dataId;
+
     value;
 
-    constructor(objectName, fieldName, options={}) {
+    constructor(objectName, fieldName, dataId, options={}) {
         this.objectName = objectName;
         this.fieldName = fieldName;
+        this.dataId = dataId;
 
         if(options['helperFields']) {
             this.helperFields = options['helperFields'];
@@ -23,16 +26,19 @@ class FieldElement {
             this.helperFields = [];
         }
     }
+
+    // If field name involves dot operation then you have to split it to access that field
+    // when you try to get a record
+    splitFieldName() {
+        return this.fieldName.split('.');
+    }
 }
 
 class VisibleFieldElement extends FieldElement {
-    dataId;
     domElement;
 
     constructor(objectName, fieldName, dataId, options={}) {
-        super(objectName, fieldName, options={});
-
-        this.dataId = dataId;
+        super(objectName, fieldName, dataId, options={});
     }
 }
 
@@ -59,24 +65,69 @@ TEMPID;
 
 
     constructor() {
+        super();
+
+
         this.surveyFieldIds = ['Paint_Checkbox', 'Paint_Comments', 'Appearance_Checkbox', 'Appearance_Comments', 'Electrical_Checkbox', 'Electrical_Comments', 'Hydraulics_Checkbox', 'Hydraulics_Comments', 'Functionality_Checkbox', 'Functionality_Comments', 'Comments'];
+
+
+        this.opportunityFieldIds = ['Opportunity_Account', 'Opportunity_Name', 'Opportunity_Owner', 'Opportunity_CloseDate'];
+
+        this.contactFieldIds = ['Contact_Name', 'Contact_Phone', 'Contact_Billing_Address', 'Contact_Shipping_Address'];
     }
 
-
+/*
     getSurveyData() {
         let fields = [];
         this.surveyFieldIds.forEach(id => {
             fields.push(this.fieldElements[id].dataId);
         });
 
-        getRecordFromId('VOTC_Survey__c', ) {
+        getRecordFromId({ objectName: 'VOTC_Survey__c', }) {
 
         }
     }
-
+*/
 
     getOpportunityData() {
+        return new Promise(function(resolve, reject) {
+                let fields = [];
 
+                this.opportunityFieldIds.forEach(id => {
+                    fields.push(this.fieldElements[id].fieldName);
+                });
+
+                getRecordFromId({
+                    objectName: 'Opportunity',
+                    recordId: this.TEMPID,
+                    fields: fields
+                }).then(record => {
+                    if(record) {
+                        this.opportunityFieldIds.forEach(id => {
+                            let fieldSplit = this.fieldElements[id].splitFieldName();
+                            let fieldValue = record[fieldSplit[0]];
+
+                            for(let i = 1; i < fieldSplit.length; i++) {
+                                fieldValue = fieldValue[fieldSplit[i]];
+                            }
+
+console.log(this.fieldElements[id].fieldName + ': ' + fieldValue);
+
+                            this.fieldElements[id].value = fieldValue;
+                        });
+                    }else {
+                        alert("Unable to get data for Opportunity, see console logs for error");
+                        console.log("No data for Opportunity, recieved '" + record + "'");
+                    }
+                }).catch(err => {
+                    alert("Unable to get data for Opportunity, see console logs for error");
+                    console.log(err);
+                });
+            
+                resolve();
+                reject();
+            }.bind(this)
+        );
     }
 
     getProductsData() {
@@ -84,7 +135,38 @@ TEMPID;
     }
 
     getContactData() {
-        
+        let fields = [];
+
+        this.contactFieldIds.forEach(id => {
+            fields.push(this.fieldElements[id].fieldName);
+        });
+console.log(this.fieldElements['Opportunity_Account'].value);
+        getRecordFromId({
+            objectName: 'Account',
+            recordId: this.fieldElements['Opportunity_Account'].value,
+            fields: fields
+        }).then(record => {
+            if(record) {
+                this.contactFieldIds.forEach(id => {
+                    let fieldSplit = this.fieldElements[id].splitFieldName();
+                    let fieldValue = record[fieldSplit[0]];
+
+                    for(let i = 1; i < fieldSplit.length; i++) {
+                        fieldValue = fieldValue[fieldSplit[i]];
+                    }
+
+console.log(this.fieldElements[id].fieldName + ': ' + fieldValue);
+
+                    this.fieldElements[id].value = fieldValue;
+                });
+            }else {
+                alert("Unable to get data for Contact, see console logs for error");
+                console.log("No data for Contact, recieved '" + record + "'");
+            }
+        }).catch(err => {
+            alert("Unable to get data for Contact, see console logs for error");
+            console.log(err);
+        });
     }
 
 
@@ -112,12 +194,23 @@ TEMPID;
 
 
         // OPPORTUNITY FIELDS
+            this.fieldElements['Opportunity_Account'] = new FieldElement('Opportunity', 'AccountId', 'Opportunity_Account');
+
             this.fieldElements['Opportunity_Name'] = new VisibleFieldElement('Opportunity', 'Name', 'Opportunity_Name');
 
-            this.fieldElements['Opportunity_Owner'] = new VisibleFieldElement('Opportunity', 'OwnerId', 'Opportunity_Owner');
+            this.fieldElements['Opportunity_Owner'] = new VisibleFieldElement('Opportunity', 'Owner.Name', 'Opportunity_Owner');
 
             this.fieldElements['Opportunity_CloseDate'] = new VisibleFieldElement('Opportunity', 'CloseDate', 'Opportunity_CloseDate');
 
+
+        // CONTACT FIELDS
+            this.fieldElements['Contact_Name'] = new VisibleFieldElement('Account', 'Name', 'Contact_Name');
+            
+            this.fieldElements['Contact_Phone'] = new VisibleFieldElement('Account', 'Phone', 'Contact_Phone'); 
+
+            this.fieldElements['Contact_Billing_Address'] = new VisibleFieldElement('Account', 'BillingAddress', 'Contact_Billing_Address');
+
+            this.fieldElements['Contact_Shipping_Address'] = new VisibleFieldElement('Account', 'ShippingAddress', 'Contact_Shipping_Address');
         }
 
 
@@ -125,7 +218,7 @@ TEMPID;
             this.handleURLParameters();
         }
 
-        if(this.isKnown_Opportunity) {
+        if(this.isKnown_Opportunity && !this.fieldElements['Opportunity_Account'].value) {
             this.handleOpportunityChosen();
         }
     }
@@ -133,13 +226,15 @@ TEMPID;
 
 
     renderedCallback() {
-        if(!this.fieldElements['Paint_Checkbox'].domElement) {
-            for(let element in this.fieldElements) {
-                if(this.fieldElements[element] instanceof VisibleFieldElement) {
-                    this.fieldElements[element].domElement = this.template.querySelector("[data-id='" + this.fieldElements[element].dataId + "']");
+        if(this.isKnown_Opportunity) {
+            if(!this.fieldElements['Paint_Checkbox'].domElement) {
+                for(let element in this.fieldElements) {
+                    if(this.fieldElements[element] instanceof VisibleFieldElement) {
+                        this.fieldElements[element].domElement = this.template.querySelector("[data-id='" + this.fieldElements[element].dataId + "']");
 
-                    if(this.fieldElements[element] instanceof InputFieldElement) {
-                        this.fieldElements[element].domElement.addEventListener("change", this.handleInput.bind(this));
+                        if(this.fieldElements[element] instanceof InputFieldElement) {
+                            this.fieldElements[element].domElement.addEventListener("change", this.handleInput.bind(this));
+                        }
                     }
                 }
             }
@@ -233,6 +328,12 @@ this.TEMPID = urlParamOppId;
 
 
     handleOpportunityChosen() {
-        
+        this.getOpportunityData().then(() => {
+console.log(this.fieldElements['Opportunity_Account'].value);
+            this.getContactData();
+        }).catch(err => {
+            alert("Error within handleOpportunityChosen");
+            console.log(err);
+        });
     }
 }
