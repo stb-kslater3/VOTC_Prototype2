@@ -8,21 +8,29 @@
                     </template>
 
 
-                    <template if:false={isKnown_Opportunity}>
+<template if:false={isKnown_Opportunity}>
                         Find Opportunity
                     </template>
-                </div>
+</div>
 
 
-                <div>
-                    <template if:true={isKnown_Opportunity}>
+<div>
+    <template if:true={isKnown_Opportunity}>
                         <div class="slds-text-heading_small">
                             Fill out the survey below. Be sure that . . .
                         </div>
 
                         <div class="slds-clearfix slds-m-top_medium">
                             <div class="slds-float_left slds-m-around_small slds-box slds-box_xx-small">
-                                <lightning-input type="checkbox" label="Paint" data-id="Paint_Checkbox"></lightning-input>
+                                <div class="slds-float_left slds-m-right_small slds-text-heading_xsmall">
+                                    Paint
+                                </div>
+
+                                <lightning-helptext content="Any missed spots, or splatters, etc.? Then leave the box unchecked."></lightning-helptext>
+
+                                <div class="slds-m-top_small">
+                                    <lightning-input type="checkbox" data-id="Paint_Checkbox"></lightning-input>
+                                </div>
 
                                 <div class="slds-m-top_small">
                                     <lightning-textarea label="Comments" data-id="Paint_Comments"></lightning-textarea>
@@ -30,7 +38,15 @@
                             </div>
 
                             <div class="slds-float_left slds-m-around_small slds-box slds-box_xx-small">
-                                <lightning-input type="checkbox" label="Appearance" data-id="Appearance_Checkbox"></lightning-input>
+                                <div class="slds-float_left slds-m-right_small slds-text-heading_xsmall">
+                                    Appearance
+                                </div>
+
+                                <lightning-helptext content="Any scratches, or wrong color, etc.? Then leave the box unchecked."></lightning-helptext>
+
+                                <div class="slds-m-top_small">
+                                    <lightning-input type="checkbox" data-id="Appearance_Checkbox"></lightning-input>
+                                </div>
 
                                 <div class="slds-m-top_small">
                                     <lightning-textarea label="Comments" data-id="Appearance_Comments"></lightning-textarea>
@@ -38,7 +54,15 @@
                             </div>
 
                             <div class="slds-float_left slds-m-around_small slds-box slds-box_xx-small">
-                                <lightning-input type="checkbox" label="Electrical" data-id="Electrical_Checkbox"></lightning-input>
+                                <div class="slds-float_left slds-m-right_small slds-text-heading_xsmall">
+                                    Electrical
+                                </div>
+
+                                <lightning-helptext content="Any exposed wires, or shorting circuits, etc.? Then leave the box unchecked."></lightning-helptext>
+
+                                <div class="slds-m-top_small">
+                                    <lightning-input type="checkbox" data-id="Electrical_Checkbox"></lightning-input>
+                                </div>
 
                                 <div class="slds-m-top_small">
                                     <lightning-textarea label="Comments" data-id="Electrical_Comments"></lightning-textarea>
@@ -46,7 +70,15 @@
                             </div>
 
                             <div class="slds-float_left slds-m-around_small slds-box slds-box_xx-small">
-                                <lightning-input type="checkbox" label="Hydraulics" data-id="Hydraulics_Checkbox"></lightning-input>
+                                <div class="slds-float_left slds-m-right_small slds-text-heading_xsmall">
+                                    Hydraulics
+                                </div>
+
+                                <lightning-helptext content="Anything hydraulic loose, or leaking, etc.? Then leave the box unchecked."></lightning-helptext>
+
+                                <div class="slds-m-top_small">
+                                    <lightning-input type="checkbox" data-id="Hydraulics_Checkbox"></lightning-input>
+                                </div>
 
                                 <div class="slds-m-top_small">
                                     <lightning-textarea label="Comments" data-id="Hydraulics_Comments"></lightning-textarea>
@@ -54,7 +86,15 @@
                             </div>
 
                             <div class="slds-float_left slds-m-around_small slds-box slds-box_xx-small">
-                                <lightning-input type="checkbox" label="Functionality" data-id="Functionality_Checkbox"></lightning-input>
+                                <div class="slds-float_left slds-m-right_small slds-text-heading_xsmall">
+                                    Functionality
+                                </div>
+
+                                <lightning-helptext content="Anything not working properly that wasn't already mentioned, etc.? Then leave the box unchecked."></lightning-helptext>
+
+                                <div class="slds-m-top_small">
+                                    <lightning-input type="checkbox" data-id="Functionality_Checkbox"></lightning-input>
+                                </div>
 
                                 <div class="slds-m-top_small">
                                     <lightning-textarea label="Comments" data-id="Functionality_Comments"></lightning-textarea>
@@ -68,7 +108,7 @@
                     </template>
 
 
-                    <template if:false={isKnown_Opportunity}>
+    <template if:false={isKnown_Opportunity}>
                         <div class="slds-text-body_regular">
                             Enter the name of an Opportunity to open a survey for it.
                         </div>
@@ -86,21 +126,21 @@
                             </lightning-record-edit-form>
                         </div>
                     </template>
-                </div>
+</div>
+</div>
+</div>
+</div>
+
+
+<div class="slds-align_absolute-center">
+    <div>
+        <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
+            <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
+                Opportunity
             </div>
-        </div>
-    </div>
 
-
-    <div class="slds-align_absolute-center">
-        <div>
-            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
-                <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
-                    Opportunity
-                </div>
-
-                <div class="slds-size_medium slds-box slds-box_xx-small">
-                    <template if:true={isKnown_Opportunity}>
+            <div class="slds-size_medium slds-box slds-box_xx-small">
+                <template if:true={isKnown_Opportunity}>
                         <div class="">
                             <div class="slds-text-body_regular">
                                 Name
@@ -140,49 +180,49 @@
                     </template>
 
 
-                    <template if:false={isKnown_Opportunity}>
+                <template if:false={isKnown_Opportunity}>
                         <div class="slds-text-body_regular">
                             Enter an Opportunity above to display its record here.
                         </div>
                     </template>
-                </div>
+            </div>
+        </div>
+
+
+        <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
+            <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
+                Products
             </div>
 
-
-            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
-                <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
-                    Products
-                </div>
-
-                <div class="slds-size_medium slds-box slds-box_xx-small">
-                    <template if:true={isKnown_Opportunity}>
+            <div class="slds-size_medium slds-box slds-box_xx-small">
+                <template if:true={isKnown_Opportunity}>
                         <template if:true={hasProducts}>
 
                         </template>
 
-                        <template if:false={hasProducts}>
+                <template if:false={hasProducts}>
                             <div class="slds-text-body_regular">
                                 No products to display for this Opportunity.
                             </div>
                         </template>
-                    </template>
+                </template>
 
 
-                    <template if:false={isKnown_Opportunity}>
+                <template if:false={isKnown_Opportunity}>
                         <div class="slds-text-body_regular">
                             Enter an Opportunity above to display the products that were sold here.
                         </div>
                     </template>
-                </div>
+            </div>
+        </div>
+
+        <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
+            <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
+                Contact
             </div>
 
-            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
-                <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
-                    Contact
-                </div>
-
-                <div class="slds-size_medium slds-box slds-box_xx-small">
-                    <template if:true={isKnown_Opportunity}>
+            <div class="slds-size_medium slds-box slds-box_xx-small">
+                <template if:true={isKnown_Opportunity}>
                         <div class="">
                             <div class="slds-text-body_regular">
                                 Contact Name
@@ -213,7 +253,11 @@
                             </div>
 
                             <lightning-formatted-address
-                                value="Contact Billing Address Here"
+                                street="Street"
+                                city="City"
+                                country="Country"
+                                province="State"
+                                postal-code="PostalCode"
                                 data-id="Contact_Billing_Address">
                             </lightning-formatted-address>
                         </div>
@@ -224,20 +268,24 @@
                             </div>
 
                             <lightning-formatted-address
-                                value="Contact Shipping Address Here"
+                                street="Street"
+                                city="City"
+                                country="Country"
+                                province="State"
+                                postal-code="PostalCode"
                                 data-id="Contact_Shipping_Address">
                             </lightning-formatted-address>
                         </div>
                     </template>
 
 
-                    <template if:false={isKnown_Opportunity}>
+                <template if:false={isKnown_Opportunity}>
                         <div class="slds-text-body_regular">
                             Enter an Opportunity above to display the contact information of the associated account here.
                         </div>
                     </template>
-                </div>
             </div>
         </div>
     </div>
+</div>
 </template>
