@@ -1,323 +1,464 @@
 import { LightningElement, track } from 'lwc';
 
+import { NavigationMixin } from "lightning/navigation";
+
 
 import getRecordFromId from '@salesforce/apex/ApexDataInterface.getRecordFromId';
 import insertRecord from '@salesforce/apex/ApexDataInterface.insertRecord';
 
 
-class FieldElement {
+class Record {
+    fields;
+
+    didGet;
+
+    constructor(fields) {
+        this.fields = fields;
+
+        this.didGet = false;
+    }
+}
+
+class Field {
+    value;
+
+    constructor() {
+
+    }
+}
+
+
+class ApexRecord extends Record {
     objectName;
+
+    constructor(apexFields, objectName) {
+        super(apexFields);
+
+        this.objectName = objectName;
+    }
+
+    get fieldNames() {
+        let fieldNames = [];
+
+        Object.keys(this.fields).forEach(key => {
+            if(this.fields[key].willGet) {
+                fieldNames.push(this.fields[key].fieldName);
+            }
+        });
+
+        return fieldNames;
+    }
+
+    setFieldsFromRecord(record) {
+        if (record) {
+            Object.keys(this.fields).forEach(key => {
+                if(this.fields[key].willGet) {
+                    let fieldSplit = this.fields[key].fieldName.split('.');
+                    let fieldValue = record[fieldSplit[0]];
+
+                    for (let i = 1; i < fieldSplit.length; i++) {
+                        fieldValue = fieldValue[fieldSplit[i]];
+                    }
+
+                    this.fields[key].value = fieldValue;
+
+                    this.didGet = true;
+                }
+            });
+        } else {
+            alert("Unable to get data for Record, see console logs for error");
+            console.log("No data for Record, recieved '" + record + "'");
+        }
+    }
+
+    getRecordFromId(id) {
+        return getRecordFromId({
+            objectName: this.objectName,
+            recordId: id,
+            fields: this.fieldNames
+        }).then(record => {
+            this.setFieldsFromRecord(record);
+        }).catch(err => {
+            alert("Unable to get data for Record, see console logs for error");
+            console.log(err);
+        });
+    }
+}
+
+class ApexField extends Field {
     fieldName;
 
-    fieldValuePairs;
+    willGet;
+    willSet;
 
-    dataId;
+    constructor(fieldName, willGet = false, willSet = false) {
+        super();
 
-    constructor(objectName, fieldName, fieldValuePairs, dataId) {
-        this.objectName = objectName;
         this.fieldName = fieldName;
 
-        this.fieldValuePairs = fieldValuePairs;
+        this.willGet = willGet;
+        this.willSet = willSet;
+    }
+}
 
+
+
+class ApexRecordURL_Record extends Record {
+
+    constructor(fields) {
+        super(fields);
+    }
+}
+
+class ApexRecordURL_Field extends Field {
+    id;
+
+    constructor() {
+        super();
+    }
+
+    setId(id) {
+        this.id = id;
+    }
+}
+
+
+
+class DataElement {
+    dataId;
+    attributes;
+
+    domReference;
+
+    didQuery;
+
+    constructor(dataId, attributes) {
         this.dataId = dataId;
+
+        this.attributes = attributes;
+
+        this.didQuery = false;
+    }
+
+
+    initialize(templateReference) {
+        this.domReference = templateReference.querySelector("[data-id='" + this.dataId + "']");
+
+        this.didQuery = true;
+
+        Object.keys(this.attributes).forEach(key => {
+            this.attributes[key].domReference = this.domReference;
+        });
+    }
+
+
+    update() {
+        Object.keys(this.attributes).forEach(attrKey => {
+            this.attributes[attrKey].update();
+        });
     }
 }
 
-class VisibleFieldElement extends FieldElement {
-    domElement;
-    attributeMap;
+class DataAttribute {
+    name;
+    
+    domReference;
 
-    constructor(objectName, fieldName, fieldValuePairs, dataId, attributeMap) {
-        super(objectName, fieldName, fieldValuePairs, dataId);
+    dataClass;
+    dataKey;
 
-        this.attributeMap = attributeMap;
+    constructor(name, dataClass, dataKey) {
+        this.name = name;
+
+        this.dataClass = dataClass;
+        this.dataKey = dataKey;
+    }
+
+    
+    set value(value) {
+        this.domReference[this.name] = value;
+    }
+
+    update() {
+        let fieldSplit = this.dataKey.split('.');
+        let fieldValue = this.dataClass.fields[fieldSplit[0]].value;
+
+        for (let i = 1; i < fieldSplit.length; i++) {
+            fieldValue = fieldValue[fieldSplit[i]];
+        }
+
+        this.domReference[this.name] = fieldValue;
     }
 }
 
-class InputFieldElement extends VisibleFieldElement {
-    constructor(objectName, fieldName, fieldValuePairs, dataId, attributeMap) {
-        super(objectName, fieldName, fieldValuePairs, dataId, attributeMap);
-    }
-}
 
 
-export default class Votc2_main extends LightningElement {
+export default class Votc2_main extends NavigationMixin(LightningElement) {
     @track isKnown_Opportunity;
-
-    @track fieldElements;
-    surveyFieldIds;
-    opportunityFieldIds;
-    productsFieldIds;
-    contactFieldIds;
-
     isHandled_URL;
     TEMPID;
-
     hasProducts;
+
+
+    @track opportunityRecord;
+    @track opportunityElements;
+    @track opportunityURLRecord;
+    
+    @track accountRecord;
+    @track accountElements;
+    @track accountURLRecord;
+
+
+    handleURLParameters() {
+        let page_url = new URL(window.location.href);
+
+        let urlParamOppId = page_url.searchParams.get("c__opportunityId");
+
+        if (urlParamOppId) {
+            //            this.opportunityChosen = urlParamOppId;
+            this.TEMPID = urlParamOppId;
+            this.isKnown_Opportunity = true;
+        } else {
+            console.log(
+                'No URL Parameter given, or a Bad URL Parameter given, not necessary unless you intended to pass a parameter. The only parameter currently is "c__opportunityId" set it to a valid opportunity id with "c__opportunityId=123456789012345678" where the numbers are a valid Id'
+            );
+        }
+
+        this.isHandled_URL = true;
+    }
 
 
     constructor() {
         super();
 
-
-        this.surveyFieldIds = ['Paint_Checkbox', 'Paint_Comments', 'Appearance_Checkbox', 'Appearance_Comments', 'Electrical_Checkbox', 'Electrical_Comments', 'Hydraulics_Checkbox', 'Hydraulics_Comments', 'Functionality_Checkbox', 'Functionality_Comments', 'Comments'];
-
-
-        this.opportunityFieldIds = ['Opportunity_Account', 'Opportunity_Name', 'Opportunity_Owner', 'Opportunity_CloseDate'];
-
-        this.contactFieldIds = ['Contact_Name', 'Contact_Phone', 'Contact_Billing_Address', 'Contact_Shipping_Address'];
-    }
-
-
-    makeFieldsToSet(fieldIds) {
-        let fields = [];
-
-        fieldIds.forEach(id => {
-            this.fieldElements[id].fieldValuePairs.keys().forEach(key => {
-                fields.push(key);
-            });
-        });
-
-        return fields;
-    }
-
-
-    setFieldsFromRecord(record, fieldIds) {
-        if (record) {
-            fieldIds.forEach(id => {
-                let fieldSplit = this.fieldElements[id].fieldName.split('.');
-                let fieldValue = record[fieldSplit[0]];
-
-                for (let i = 1; i < fieldSplit.length; i++) {
-                    fieldValue = fieldValue[fieldSplit[i]];
-                }
-
-                console.log(this.fieldElements[id].fieldName + ': ' + fieldValue);
-
-                this.fieldElements[id].value = fieldValue;
-
-
-                if (this.fieldElements[id].helperFields.length > 0) {
-                    this.fieldElements[id].helperFields.forEach(field => {
-                        let fieldSplit = field.fieldName.split('.');
-                        let fieldValue = record[fieldSplit[0]];
-
-                        for (let i = 1; i < fieldSplit.length; i++) {
-                            fieldValue = fieldValue[fieldSplit[i]];
-                        }
-
-                        console.log(field.fieldName + ': ' + fieldValue);
-
-                        field.value = fieldValue;
-                    });
-                }
-            });
-        } else {
-            alert("Unable to get data for Contact, see console logs for error");
-            console.log("No data for Contact, recieved '" + record + "'");
-        }
-    }
-
-
-    /*
-        getSurveyData() {
-            let fields = [];
-            this.surveyFieldIds.forEach(id => {
-                fields.push(this.fieldElements[id].dataId);
-            });
-
-            getRecordFromId({ objectName: 'VOTC_Survey__c', }) {
-
-            }
-        }
-    */
-
-    getOpportunityData() {
-        let fields = this.makeFieldsToSet(this.opportunityFieldIds);
-
-        // Noctice that I want some things to run after opportunity like Account gets its id from
-        // this call to get Opportunity, so I need to return the promise after the .then()
-        // completes in order to make sure I can run those after this so I have their id
-        return getRecordFromId({
-            objectName: 'Opportunity',
-            recordId: this.TEMPID,
-            fields: fields
-        }).then(record => {
-            this.setFieldsFromRecord(record, this.opportunityFieldIds);
-        }).catch(err => {
-            alert("Unable to get data for Opportunity, see console logs for error");
-            console.log(err);
-        });
-    }
-
-    getProductsData() {
-
-    }
-
-    getContactData() {
-        let fields = this.makeFieldsToSet(this.contactFieldIds);
-
-        return getRecordFromId({
-            objectName: 'Account',
-            recordId: this.fieldElements['Opportunity_Account'].value,
-            fields: fields
-        }).then(record => {
-            this.setFieldsFromRecord(record, this.contactFieldIds);
-        }).catch(err => {
-            alert("Unable to get data for Contact, see console logs for error");
-            console.log(err);
-        });
-    }
-
-
-    connectedCallback() {
-        if (!this.fieldElements) {
-            this.fieldElements = {};
-
-            // SURVEY FIELDS
-            this.fieldElements['Paint_Checkbox'] = new InputFieldElement(
-                'VOTC_Survey__c',
-                'Paint__c', {},
-                'Paint_Checkbox'
-            );
-            this.fieldElements['Paint_Comments'] = new InputFieldElement(
-                'VOTC_Survey__c',
-                'Paint_Comment__c', {},
-                'Paint_Comments'
-            );
-
-            this.fieldElements['Appearance_Checkbox'] = new InputFieldElement(
-                'VOTC_Survey__c',
-                'Appearance__c', {},
-                'Appearance_Checkbox'
-            );
-            this.fieldElements['Appearance_Comments'] = new InputFieldElement(
-                'VOTC_Survey__c',
-                'Appearance_Comment__c', {},
-                'Appearance_Comments'
-            );
-
-            this.fieldElements['Electrical_Checkbox'] = new InputFieldElement(
-                'VOTC_Survey__c',
-                'Electrical__c', {},
-                'Electrical_Checkbox'
-            );
-            this.fieldElements['Electrical_Comments'] = new InputFieldElement(
-                'VOTC_Survey__c',
-                'Electrical_Comment__c', {},
-                'Electrical_Comments'
-            );
-
-            this.fieldElements['Hydraulics_Checkbox'] = new InputFieldElement(
-                'VOTC_Survey__c',
-                'Unfaulty__c', {},
-                'Hydraulics_Checkbox'
-            );
-            this.fieldElements['Hydraulics_Comments'] = new InputFieldElement(
-                'VOTC_Survey__c',
-                'Unfaulty_Comment__c', {},
-                'Hydraulics_Comments'
-            );
-
-            this.fieldElements['Functionality_Checkbox'] = new InputFieldElement(
-                'VOTC_Survey__c',
-                'Functionality__c', {},
-                'Functionality_Checkbox'
-            );
-            this.fieldElements['Functionality_Comments'] = new InputFieldElement(
-                'VOTC_Survey__c',
-                'Functionality_Comment__c', {},
-                'Functionality_Comments'
-            );
-
-            this.fieldElements['Comments'] = new InputFieldElement(
-                'VOTC_Survey__c',
-                'Comments__c', {},
-                'Comments'
-            );
-
-
-            // OPPORTUNITY FIELDS
-            this.fieldElements['Opportunity_Account'] = new FieldElement(
-                'Opportunity',
-                'AccountId',
-                'Opportunity_Account'
-            );
-
-            this.fieldElements['Opportunity_Name'] = new VisibleFieldElement(
-                'Opportunity',
-                'Name', {},
-                'Opportunity_Name'
-            );
-
-            this.fieldElements['Opportunity_Owner'] = new VisibleFieldElement(
-                'Opportunity',
-                'Owner.Name', {},
-                'Opportunity_Owner'
-            );
-
-            this.fieldElements['Opportunity_CloseDate'] = new VisibleFieldElement(
-                'Opportunity',
-                'CloseDate', {},
-                'Opportunity_CloseDate'
-            );
-
-
-            // CONTACT FIELDS
-            this.fieldElements['Contact_Name'] = new VisibleFieldElement(
-                'Account',
-                'Name', {},
-                'Contact_Name'
-            );
-
-            this.fieldElements['Contact_Phone'] = new VisibleFieldElement(
-                'Account',
-                'Phone', {},
-                'Contact_Phone'
-            );
-
-            this.fieldElements['Contact_Billing_Address'] = new VisibleFieldElement(
-                'Account',
-                'BillingAddress', {},
-                'Contact_Billing_Address'
-            );
-
-            this.fieldElements['Contact_Shipping_Address'] = new VisibleFieldElement(
-                'Account',
-                'ShippingAddress', {},
-                'Contact_Shipping_Address'
-            );
-        }
-
-
         if (!this.isHandled_URL) {
             this.handleURLParameters();
         }
+        
+        if(!this.opportunityRecord) {
+            this.opportunityRecord = new ApexRecord(
+                {
+                    Id: new ApexField('Id', true),
 
-        if (this.isKnown_Opportunity && !this.fieldElements['Opportunity_Account'].value) {
-            this.handleOpportunityChosen();
+                    Name: new ApexField('Name', true),
+
+                    OwnerId: new ApexField('OwnerId', true),
+
+                    OwnerName: new ApexField('Owner.Name', true),
+
+                    CloseDate: new ApexField('CloseDate', true),
+
+                    AccountId: new ApexField('AccountId', true)
+                },
+
+                'Opportunity'
+            );
+        }
+        if(!this.opportunityURLRecord) {
+            this.opportunityURLRecord = new ApexRecordURL_Record(
+                {
+                    OpportunityNameURL: new ApexRecordURL_Field(),
+                    OpportunityOwnerURL: new ApexRecordURL_Field()
+                }
+            );
+        }
+        if(!this.opportunityElements) {
+            this.opportunityElements = {
+                Opportunity_Name: new DataElement(
+                    'Opportunity_Name',
+
+                    {
+                        value: new DataAttribute('value', this.opportunityURLRecord, 'OpportunityNameURL'),
+                        label: new DataAttribute('label', this.opportunityRecord, 'Name')
+                    }
+                ),
+
+                Opportunity_Owner: new DataElement(
+                    'Opportunity_Owner',
+
+                    {
+                        value: new DataAttribute('value', this.opportunityURLRecord, 'OpportunityOwnerURL'),
+                        label: new DataAttribute('label', this.opportunityRecord, 'OwnerName')
+                    }
+                ),
+
+                Opportunity_CloseDate: new DataElement(
+                    'Opportunity_CloseDate',
+
+                    {
+                        value: new DataAttribute('value', this.opportunityRecord, 'CloseDate')
+                    }
+                )
+            };
+        }
+
+
+        if(!this.accountRecord) {
+            this.accountRecord = new ApexRecord(
+                {
+                    Name: new ApexField('Name', true),
+
+                    Phone: new ApexField('Phone', true),
+
+                    BillingAddress: new ApexField('BillingAddress', true),
+
+                    ShippingAddress: new ApexField('ShippingAddress', true)
+                },
+
+                'Account'
+            );
+        }
+        if(!this.accountURLRecord) {
+            this.accountURLRecord = new ApexRecordURL_Record(
+                {
+                    AccountPhoneURL: new ApexRecordURL_Field(),
+                }
+            );
+        }
+        if(!this.accountElements) {
+            this.accountElements = {
+                Account_Name: new DataElement(
+                    'Account_Name',
+
+                    {
+                        value: new DataAttribute('value', this.accountURLRecord, 'AccountPhoneURL'),
+                        label: new DataAttribute('label', this.accountRecord, 'Name')
+                    }
+                ),
+
+                Account_Phone: new DataElement(
+                    'Account_Phone',
+
+                    {
+                        value: new DataAttribute('value', this.accountRecord, 'Phone')
+                    }
+                ),
+
+                Account_Billing_Address: new DataElement(
+                    'Account_Billing_Address',
+
+                    {
+                        street: new DataAttribute('street', this.accountRecord, 'BillingAddress.street'),
+                        city: new DataAttribute('city', this.accountRecord, 'BillingAddress.city'),
+                        state: new DataAttribute('province', this.accountRecord, 'BillingAddress.state'),
+                        postalCode: new DataAttribute('postal-code', this.accountRecord, 'BillingAddress.postalCode'),
+                        country: new DataAttribute('country', this.accountRecord, 'BillingAddress.country'),
+                    }
+                ),
+
+                Account_Shipping_Address: new DataElement(
+                    'Account_Shipping_Address',
+
+                    {
+                        street: new DataAttribute('street', this.accountRecord, 'ShippingAddress.street'),
+                        city: new DataAttribute('city', this.accountRecord, 'ShippingAddress.city'),
+                        state: new DataAttribute('province', this.accountRecord, 'ShippingAddress.state'),
+                        postalCode: new DataAttribute('postal-code', this.accountRecord, 'ShippingAddress.postalCode'),
+                        country: new DataAttribute('country', this.accountRecord, 'ShippingAddress.country'),
+                    }
+                )
+            };
+        }
+
+
+
+        if(!this.opportunityRecord.didGet) {
+            this.opportunityRecord.getRecordFromId(this.TEMPID).then(() => {
+                this.opportunityURLRecord.fields.OpportunityNameURL.setId(this.opportunityRecord.fields.Id.value);
+                this.opportunityURLRecord.fields.OpportunityOwnerURL.setId(this.opportunityRecord.fields.OwnerId.value);
+
+                this[NavigationMixin.GenerateUrl]({
+                    type: "standard__recordPage",
+                    attributes: {
+                        recordId: this.opportunityURLRecord.fields.OpportunityNameURL.id,
+                        actionName: "view"
+                    }
+                }).then(url => {
+                    this.opportunityURLRecord.fields.OpportunityNameURL.value = window.location.origin + url;
+                }).catch(err => {
+                    alert("Error in then of opportunity getRecordFromId, when trying to get the URL for opportunity");
+                    console.log(err);
+                });
+
+
+                this[NavigationMixin.GenerateUrl](
+                    {
+                        type: "standard__recordPage",
+                        attributes: {
+                            recordId: this.opportunityURLRecord.fields.OpportunityOwnerURL.id,
+                            actionName: "view"
+                        }
+                    }
+                ).then(url => {
+                    this.opportunityURLRecord.fields.OpportunityOwnerURL.value = window.location.origin + url;
+
+                    Object.keys(this.opportunityElements).forEach(elemKey => {
+                        this.opportunityElements[elemKey].update();
+                    });
+
+                }).catch(err => {
+                    alert("Error in then of opportunity getRecordFromId, when trying to get the URL for opportunity");
+                    console.log(err);
+                });
+
+
+
+                if(!this.accountRecord.didGet) {
+                    this.accountURLRecord.fields.AccountPhoneURL.setId(this.opportunityRecord.fields.AccountId.value);
+
+                    this.accountRecord.getRecordFromId(this.opportunityRecord.fields.AccountId.value).then(() => {
+                        this[NavigationMixin.GenerateUrl](
+                            {
+                                type: "standard__recordPage",
+                                attributes: {
+                                    recordId: this.accountURLRecord.fields.AccountPhoneURL.id,
+                                    actionName: "view"
+                                }
+                            }
+                        ).then(url => {
+                            this.accountURLRecord.fields.AccountPhoneURL.value = window.location.origin + url;
+        
+                            Object.keys(this.accountElements).forEach(elemKey => {
+                                this.accountElements[elemKey].update();
+                            });
+        
+                        }).catch(err => {
+                            alert("Error in then of account getRecordFromId, when trying to get the URL for account");
+                            console.log(err);
+                        });
+                    
+                    }).catch(err => {
+                        alert("Error in then of opportunity getRecordFromId");
+                        console.log(err);
+                    });
+                }
+            
+            }).catch(err => {
+                alert("Error in then of opportunity getRecordFromId");
+                console.log(err);
+            });
         }
     }
+
 
 
 
     renderedCallback() {
-        if (this.isKnown_Opportunity) {
-            if (!this.fieldElements['Paint_Checkbox'].domElement) {
-                for (let element in this.fieldElements) {
-                    if (this.fieldElements[element] instanceof VisibleFieldElement) {
-                        this.fieldElements[element].domElement = this.template.querySelector("[data-id='" + this.fieldElements[element].dataId + "']");
+        if(!this.opportunityElements.Opportunity_Name.didQuery) {
+            Object.keys(this.opportunityElements).forEach(key => {
+                this.opportunityElements[key].initialize(this.template);
+            });
+        }
 
-                        if (this.fieldElements[element] instanceof InputFieldElement) {
-                            this.fieldElements[element].domElement.addEventListener("change", this.handleInput.bind(this));
-                        }
-                    }
-                }
-            }
+        if(!this.accountElements.Account_Name.didQuery) {
+            Object.keys(this.accountElements).forEach(key => {
+                this.accountElements[key].initialize(this.template);
+            });
         }
     }
 
 
+/*
     handleInput(event) {
         if (event.target.getAttribute("data-id").includes('Checkbox')) {
             this.fieldElements[event.target.getAttribute("data-id")].value = this.fieldElements[event.target.getAttribute("data-id")].domElement.checked;
@@ -381,47 +522,5 @@ export default class Votc2_main extends LightningElement {
                 break;
         }
     }
-
-
-
-    handleURLParameters() {
-        let page_url = new URL(window.location.href);
-
-        let urlParamOppId = page_url.searchParams.get("c__opportunityId");
-
-        if (urlParamOppId) {
-            //            this.opportunityChosen = urlParamOppId;
-            this.TEMPID = urlParamOppId;
-            this.isKnown_Opportunity = true;
-        } else {
-            console.log(
-                'No URL Parameter given, or a Bad URL Parameter given, not necessary unless you intended to pass a parameter. The only parameter currently is "c__opportunityId" set it to a valid opportunity id with "c__opportunityId=123456789012345678" where the numbers are a valid Id'
-            );
-        }
-
-        this.isHandled_URL = true;
-    }
-
-
-    handleOpportunityChosen() {
-        /*
-         this.getOpportunityData().then(() => {
-
-             this.getContactData().then(() => {
-                 console.log('BillingAddress.street: ' + this.fieldElements['Contact_Billing_Address'].value['street']);
-                 console.log('BillingAddress.city: ' + this.fieldElements['Contact_Billing_Address'].value['city']);
-                 console.log('BillingAddress.state: ' + this.fieldElements['Contact_Billing_Address'].value['state']);
-                 console.log('BillingAddress.postalCode: ' + this.fieldElements['Contact_Billing_Address'].value['postalCode']);
-                 console.log('BillingAddress.country: ' + this.fieldElements['Contact_Billing_Address'].value['country']);
-             }).catch(err => {
-                 alert("Error within the then of getContactData in handleOpportunityChosen");
-                 console.log(err);
-             });
-
-         }).catch(err => {
-             alert("Error within the then of getOpportunityData in handleOpportunityChosen");
-             console.log(err);
-         });
-         */
-    }
+*/
 }
