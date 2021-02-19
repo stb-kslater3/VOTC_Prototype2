@@ -38,8 +38,15 @@ import insertRecord from '@salesforce/apex/ApexDataInterface.insertRecord';
  * 
  * Value Interface:
 */
+
+class Record_Array extends Array {
+
+}
+
+
+// . . .
 class Data_Manager {
-    recordCollection;
+    recordArray;
 
     constructor() {
 
@@ -56,15 +63,27 @@ class Apex_Data_Manager extends Data_Manager {
 
 
 class Data_Record {
-    
+    fields;
+
+    constructor() {
+
+    }
 }
 
 class Data_Field {
+    values;
 
+    constructor() {
+
+    }
 }
 
 class Data_Value {
+    value;
 
+    constructor() {
+        
+    }
 }
 
 

@@ -1,0 +1,29 @@
+
+Data Manager {
+    list of fields;
+
+
+    // If I am an Apex class I will need additional info about what data to get and maybe things
+    // like where clause WhereValuePairs and what not so I will have a seperate method to initialize
+    // that other info, but all in all whether Apex or a URL when I want to get data I just run this
+    // it will run the get my data. In Apex if I need to get data a different way later I can respecify
+    // that other info . . .
+    go get the data() {
+
+    }
+
+
+    // I get the record so that I can call its interface methods and get the fields etc. until I get the data or whatever
+    give me the record at(index) {
+
+    }
+}
+
+
+Apex Data Manager extends Data Manager {
+    object name;
+
+
+}
+
+
