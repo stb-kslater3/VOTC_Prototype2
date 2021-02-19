@@ -9,9 +9,78 @@ import getRecordsWhere from '@salesforce/apex/ApexDataInterface.getRecordsWhere'
 import insertRecord from '@salesforce/apex/ApexDataInterface.insertRecord';
 
 
-class ErrorCommunicator {
+
+// ------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------
+/*
+ * A layered data management approach
+ * 
+ * Data Manager provides a standard interface to all your data needs from a common source, whether those needs be a collection
+ * of apex records from a given object, or a single URL from the NavigationMixIn, all data will be held by some implementation
+ * of the Data_Manager and its children.
+ * 
+ * A Data Manager holds a collection of Records, Records hold a collection of Fields, Fields hold a collection of Values. Values
+ * hold an actual single value and other data as needed, as well as common methods.
+ * Put another way . . .
+ * Data Managers are clients to their 1 Record Server.
+ * Records are a Server to their 1 Data Manager and a client to their OneOrMany Fields Servers.
+ * Fields are a Server to their 1 Record, and a Client to the OneOrMany Value Servers.
+ * Values are servers to their 1 Fields.
+ * 
+ * Each layer holds an implementation of an interface that handles the types of problems that come up at that layer.
+ * 
+ * Data Manager Interface: holds a collection of records and standard methods to work with that collection and holds other necessary
+ * data.
+ * 
+ * Record Interface: 
+ * 
+ * Field Interface: 
+ * 
+ * Value Interface:
+*/
+class Data_Manager {
+    recordCollection;
+
+    constructor() {
+
+    }
+}
+
+class Apex_Data_Manager extends Data_Manager {
+    objectName;
+
+    constructor() {
+        super();
+    }
+}
+
+
+class Data_Record {
     
 }
+
+class Data_Field {
+
+}
+
+class Data_Value {
+
+}
+
+
+
+class DOM_Manager {
+
+}
+
+
+class Error_Manager {
+    
+}
+
+
+// ------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------
 
 
 class RecordCollection {
