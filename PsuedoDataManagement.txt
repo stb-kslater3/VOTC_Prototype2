@@ -1,4 +1,9 @@
 
+Record Array extends Array {
+    
+}
+
+
 Data Manager {
     list of fields;
 
