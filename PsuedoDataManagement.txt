@@ -32,3 +32,27 @@ Apex Data Manager extends Data Manager {
 }
 
 
+Data Record {
+    // List of fields will be an array and the official source of fields.
+    // Also, because these will not get moved around and having a name for them is useful there will be a fields
+    // map, which takes Names to their Index
+    list of fields;
+    
+    field name to index map;
+
+    
+}
+
+
+Data Field {
+    list of values;
+
+}
+
+
+Data Value {
+    value;
+
+}
+
+
