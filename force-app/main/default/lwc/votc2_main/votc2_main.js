@@ -1,11 +1,26 @@
 import { LightningElement, track } from 'lwc';
 
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+
 import { NavigationMixin } from "lightning/navigation";
 
-
 import getRecordFromId from '@salesforce/apex/ApexDataInterface.getRecordFromId';
+import getRecordsWhere from '@salesforce/apex/ApexDataInterface.getRecordsWhere';
 import insertRecord from '@salesforce/apex/ApexDataInterface.insertRecord';
 
+
+class ErrorCommunicator {
+    
+}
+
+
+class RecordCollection {
+    records;
+
+    constructor() {
+
+    }
+}
 
 class Record {
     fields;
@@ -28,10 +43,29 @@ class Field {
 }
 
 
+class ApexRecordCollection extends RecordCollection {
+    objectName;
+
+    
+
+    constructor() {
+        super();
+    }
+
+
+    getRecordsWhere(whereValuePairs) {
+        return getRecordsWhere({
+            objectName: this.objectName,
+
+            
+        }).then().catch();
+    }
+}
+
 class ApexRecord extends Record {
     objectName;
 
-    constructor(apexFields, objectName) {
+    constructor(objectName, apexFields) {
         super(apexFields);
 
         this.objectName = objectName;
@@ -66,8 +100,7 @@ class ApexRecord extends Record {
                 }
             });
         } else {
-            alert("Unable to get data for Record, see console logs for error");
-            console.log("No data for Record, recieved '" + record + "'");
+            console.log("No data for record from " + this.objectName + ", recieved '" + record + "'");
         }
     }
 
@@ -79,9 +112,22 @@ class ApexRecord extends Record {
         }).then(record => {
             this.setFieldsFromRecord(record);
         }).catch(err => {
-            alert("Unable to get data for Record, see console logs for error");
-            console.log(err);
+            const toast = new ShowToastEvent({
+                title: 'Error: getRecordId() for ' + this.objectName,
+                message: err.toString(),
+                variant: 'error',
+                mode: 'sticky'
+            });
+
+            //this.dispatchEvent(toast);
+
+            //alert("Unable to get data for record from " + this.objectName + ", see console logs for error");
+            //console.log(err);
         });
+    }
+
+    handleError() {
+
     }
 }
 
@@ -159,6 +205,23 @@ class DataElement {
     }
 }
 
+
+class InputElement extends DataElement {
+    constructor(dataId, attributes) {
+        super(dataId, attributes);
+
+
+    }
+
+
+    initialize(templateReference, handler) {
+        DataElement.prototype.initialize.call(this, templateReference);
+
+        this.domReference.addEventListener("change", handler);
+    }
+}
+
+
 class DataAttribute {
     name;
     
@@ -197,16 +260,20 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
     @track isKnown_Opportunity;
     isHandled_URL;
     TEMPID;
-    hasProducts;
 
+
+    opportunityLookupElement;
 
     @track opportunityRecord;
-    @track opportunityElements;
     @track opportunityURLRecord;
+    opportunityElements;
     
+    @track surveyRecord;
+    surveyElements;
+
     @track accountRecord;
-    @track accountElements;
     @track accountURLRecord;
+    accountElements;
 
 
     handleURLParameters() {
@@ -234,9 +301,23 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
         if (!this.isHandled_URL) {
             this.handleURLParameters();
         }
-        
+
+
+        if(!this.opportunityLookupElement) {
+            this.opportunityLookupElement = new InputElement(
+                'OpportunityLookup',
+
+                {
+                    value: new DataAttribute('value', this.opportunityRecord, 'Id')
+                }
+            );
+        }
+
+
         if(!this.opportunityRecord) {
             this.opportunityRecord = new ApexRecord(
+                'Opportunity',
+
                 {
                     Id: new ApexField('Id', true),
 
@@ -249,9 +330,7 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
                     CloseDate: new ApexField('CloseDate', true),
 
                     AccountId: new ApexField('AccountId', true)
-                },
-
-                'Opportunity'
+                }
             );
         }
         if(!this.opportunityURLRecord) {
@@ -292,9 +371,122 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
             };
         }
 
+        if(!this.surveyRecord) {
+            this.surveyRecord = new ApexRecord(
+                'VOTC_Survey__c',
+
+                {
+                    Paint: new ApexField('Paint__c', true, true),
+                    Paint_Comments: new ApexField('Paint_Comment__c', true, true),
+
+                    //Appearance: new ApexField('Appearance__c', true, true),
+                    Appearance: new ApexField('Appearance', true, true),
+                    Appearance_Comments: new ApexField('Appearance_Comment__c', true, true),
+
+                    Electrical: new ApexField('Electrical__c', true, true),
+                    Electrical_Comments: new ApexField('Electrical_Comment__c', true, true),
+
+                    Hydraulics: new ApexField('Unfaulty__c', true, true),
+                    Hydraulics_Comments: new ApexField('Unfaulty_Comment__c', true, true),
+
+                    Functionality: new ApexField('Functionality__c', true, true),
+                    Functionality_Comments: new ApexField('Functionality_Comment__c', true, true),
+
+                    Comments: new ApexField('Comments__c', true, true)
+                }
+            );
+        }
+        if(!this.surveyElements) {
+            this.surveyElements = {
+                Paint_Checkbox: new InputElement(
+                    'Paint_Checkbox',
+
+                    {
+                        value: new DataAttribute('value', this.surveyRecord, 'Paint')
+                    }
+                ),
+                Paint_Comments: new InputElement(
+                    'Paint_Comments',
+
+                    {
+                        value: new DataAttribute('value', this.surveyRecord, 'Paint_Comments')
+                    }
+                ),
+
+                Appearance_Checkbox: new InputElement(
+                    'Appearance_Checkbox',
+
+                    {
+                        value: new DataAttribute('value', this.surveyRecord, 'Appearance')
+                    }
+                ),
+                Appearance_Comments: new InputElement(
+                    'Appearance_Comments',
+
+                    {
+                        value: new DataAttribute('value', this.surveyRecord, 'Appearance_Comments')
+                    }
+                ),
+
+                Electrical_Checkbox: new InputElement(
+                    'Electrical_Checkbox',
+
+                    {
+                        value: new DataAttribute('value', this.surveyRecord, 'Electrical')
+                    }
+                ),
+                Electrical_Comments: new InputElement(
+                    'Electrical_Comments',
+
+                    {
+                        value: new DataAttribute('value', this.surveyRecord, 'Electrical_Comments')
+                    }
+                ),
+
+                Hydraulics_Checkbox: new InputElement(
+                    'Hydraulics_Checkbox',
+
+                    {
+                        value: new DataAttribute('value', this.surveyRecord, 'Hydraulics')
+                    }
+                ),
+                Hydraulics_Comments: new InputElement(
+                    'Hydraulics_Comments',
+
+                    {
+                        value: new DataAttribute('value', this.surveyRecord, 'Hydraulics_Comments')
+                    }
+                ),
+
+                Functionality_Checkbox: new InputElement(
+                    'Functionality_Checkbox',
+
+                    {
+                        value: new DataAttribute('value', this.surveyRecord, 'Functionality')
+                    }
+                ),
+                Functionality_Comments: new InputElement(
+                    'Functionality_Comments',
+
+                    {
+                        value: new DataAttribute('value', this.surveyRecord, 'Functionality_Comments')
+                    }
+                ),
+
+                Comments: new InputElement(
+                    'Comments',
+
+                    {
+                        value: new DataAttribute('value', this.surveyRecord, 'Comments')
+                    }
+                )
+            };
+        }
 
         if(!this.accountRecord) {
             this.accountRecord = new ApexRecord(
+                'Account',
+
                 {
                     Name: new ApexField('Name', true),
 
@@ -303,9 +495,7 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
                     BillingAddress: new ApexField('BillingAddress', true),
 
                     ShippingAddress: new ApexField('ShippingAddress', true)
-                },
-
-                'Account'
+                }
             );
         }
         if(!this.accountURLRecord) {
@@ -359,9 +549,30 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
                 )
             };
         }
+        
+
+        if(this.isKnown_Opportunity) {
+            this.handleOpportunityChosen();
+        }
+    }
 
 
+    handleError(errorCaller, titleAddon, errorMessage) {
+        let title = 'Error: Within call to ' + errorCaller + ' ' + titleAddon;
 
+        const toast = new ShowToastEvent({
+            title: title,
+            message: errorMessage.toString(),
+            variant: 'error',
+            mode: 'sticky'
+        });
+
+        this.dispatchEvent(toast);
+    }
+
+
+    handleOpportunityChosen() {
+console.log(this.surveyRecord);
         if(!this.opportunityRecord.didGet) {
             this.opportunityRecord.getRecordFromId(this.TEMPID).then(() => {
                 this.opportunityURLRecord.fields.OpportunityNameURL.setId(this.opportunityRecord.fields.Id.value);
@@ -401,6 +612,16 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
                     console.log(err);
                 });
 
+            
+                if(!this.surveyRecord.didGet) {
+                    this.surveyRecord.getRecordFromId(this.opportunityRecord.fields.Id.value).then(() => {
+                        Object.keys(this.surveyElements).forEach(elemKey => {
+                            this.surveyElements[elemKey].update();
+                        });
+                    }).catch(err => {
+                        this.handleError('getRecordId().catch()', 'for ' + this.surveyRecord.objectName ,err);
+                    });
+                }
 
 
                 if(!this.accountRecord.didGet) {
@@ -428,7 +649,7 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
                         });
                     
                     }).catch(err => {
-                        alert("Error in then of opportunity getRecordFromId");
+                        alert("Error in then of account getRecordFromId");
                         console.log(err);
                     });
                 }
@@ -444,83 +665,117 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
 
 
     renderedCallback() {
-        if(!this.opportunityElements.Opportunity_Name.didQuery) {
-            Object.keys(this.opportunityElements).forEach(key => {
-                this.opportunityElements[key].initialize(this.template);
-            });
+        if(!this.isKnown_Opportunity) {
+            if(!this.opportunityLookupElement.didQuery) {
+                this.opportunityLookupElement.initialize(this.template, this.handleInput.bind(this));
+            }
         }
 
-        if(!this.accountElements.Account_Name.didQuery) {
-            Object.keys(this.accountElements).forEach(key => {
-                this.accountElements[key].initialize(this.template);
-            });
+        if(this.isKnown_Opportunity) {
+            if(!this.opportunityElements.Opportunity_Name.didQuery) {
+                Object.keys(this.opportunityElements).forEach(key => {
+                    this.opportunityElements[key].initialize(this.template);
+                });
+            }
+            
+            if(!this.surveyElements.Paint_Checkbox.didQuery) {
+                Object.keys(this.surveyElements).forEach(key => {
+                    this.surveyElements[key].initialize(this.template, this.handleInput.bind(this));
+                });
+            }
+            
+            if(!this.accountElements.Account_Name.didQuery) {
+                Object.keys(this.accountElements).forEach(key => {
+                    this.accountElements[key].initialize(this.template);
+                });
+            }
         }
     }
 
 
-/*
     handleInput(event) {
-        if (event.target.getAttribute("data-id").includes('Checkbox')) {
-            this.fieldElements[event.target.getAttribute("data-id")].value = this.fieldElements[event.target.getAttribute("data-id")].domElement.checked;
-        } else {
-            this.fieldElements[event.target.getAttribute("data-id")].value = this.fieldElements[event.target.getAttribute("data-id")].domElement.value;
+        let dataId = event.target.getAttribute("data-id");
+
+        if(this.isKnown_Opportunity) { // These only exist when an opportunity is known
+            if (dataId.includes('Checkbox')) {
+                this.surveyElements[dataId].value = this.surveyElements[dataId].domReference.checked;
+            } else {
+                this.surveyElements[dataId].value = this.surveyElements[dataId].domReference.value;
+            }
+
+            switch (dataId) {
+                case 'Paint_Checkbox':
+                    console.log(this.surveyElements['Paint_Checkbox'].value);
+                    break;
+
+                case 'Paint_Comments':
+                    console.log(this.surveyElements['Paint_Comments'].value);
+                    break;
+
+
+                case 'Appearance_Checkbox':
+                    console.log(this.surveyElements['Appearance_Checkbox'].value);
+                    break;
+
+                case 'Appearance_Comments':
+                    console.log(this.surveyElements['Appearance_Comments'].value);
+                    break;
+
+
+                case 'Electrical_Checkbox':
+                    console.log(this.surveyElements['Electrical_Checkbox'].value);
+                    break;
+
+                case 'Electrical_Comments':
+                    console.log(this.surveyElements['Electrical_Comments'].value);
+                    break;
+
+
+                case 'Hydraulics_Checkbox':
+                    console.log(this.surveyElements['Hydraulics_Checkbox'].value);
+                    break;
+
+                case 'Hydraulics_Comments':
+                    console.log(this.surveyElements['Hydraulics_Comments'].value);
+                    break;
+
+
+                case 'Functionality_Checkbox':
+                    console.log(this.surveyElements['Functionality_Checkbox'].value);
+                    break;
+
+                case 'Functionality_Comments':
+                    console.log(this.surveyElements['Functionality_Comments'].value);
+                    break;
+
+
+                case 'Comments':
+                    console.log(this.surveyElements['Comments'].value);
+                    break;
+
+
+                default:
+                    break;
+            }
+        }else {// These only exist when an opportunity is unknown
+            switch(dataId) {
+                case 'OpportunityLookup':
+                    this.opportunityLookupElement.value = this.opportunityLookupElement.domReference.value;
+
+                    this.TEMPID = this.opportunityLookupElement.value;
+                    this.isKnown_Opportunity = true;
+
+                    this.handleOpportunityChosen();
+
+                    break;
+
+
+                default:
+                    break;
+            }
         }
 
-
-        switch (event.target.getAttribute("data-id")) {
-            case 'Paint_Checkbox':
-                console.log(this.fieldElements['Paint_Checkbox'].domElement.checked);
-                break;
-
-            case 'Paint_Comments':
-                console.log(this.fieldElements['Paint_Comments'].domElement.value);
-                break;
-
-
-            case 'Appearance_Checkbox':
-                console.log(this.fieldElements['Appearance_Checkbox'].domElement.checked);
-                break;
-
-            case 'Appearance_Comments':
-                console.log(this.fieldElements['Appearance_Comments'].domElement.value);
-                break;
-
-
-            case 'Electrical_Checkbox':
-                console.log(this.fieldElements['Electrical_Checkbox'].domElement.checked);
-                break;
-
-            case 'Electrical_Comments':
-                console.log(this.fieldElements['Electrical_Comments'].domElement.value);
-                break;
-
-
-            case 'Hydraulics_Checkbox':
-                console.log(this.fieldElements['Hydraulics_Checkbox'].domElement.checked);
-                break;
-
-            case 'Hydraulics_Comments':
-                console.log(this.fieldElements['Hydraulics_Comments'].domElement.value);
-                break;
-
-
-            case 'Functionality_Checkbox':
-                console.log(this.fieldElements['Functionality_Checkbox'].domElement.checked);
-                break;
-
-            case 'Functionality_Comments':
-                console.log(this.fieldElements['Functionality_Comments'].domElement.value);
-                break;
-
-
-            case 'Comments':
-                console.log(this.fieldElements['Comments'].domElement.value);
-                break;
-
-
-            default:
-                break;
-        }
     }
-*/
+
+
 }
