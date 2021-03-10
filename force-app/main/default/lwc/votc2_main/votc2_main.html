@@ -3,19 +3,19 @@
         <div>
             <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
                 <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
-                    <template if:true={isKnown_Opportunity}>
+                    <template if:true={opporutunityChosen}>
                         Survey
                     </template>
 
 
-                    <template if:false={isKnown_Opportunity}>
+                    <template if:false={opporutunityChosen}>
                         Find Opportunity
                     </template>
                 </div>
 
 
                 <div>
-                    <template if:true={isKnown_Opportunity}>
+                    <template if:true={opporutunityChosen}>
                         <div class="slds-text-heading_small">
                             Fill out the survey below. Be sure that . . .
                         </div>
@@ -29,11 +29,11 @@
                                 <lightning-helptext content="Any missed spots, or splatters, etc.? Then leave the box unchecked."></lightning-helptext>
 
                                 <div class="slds-m-top_small">
-                                    <lightning-input type="checkbox" data-id="Paint_Checkbox"></lightning-input>
+                                    <lightning-input type="checkbox" data-id="PaintCheckbox"></lightning-input>
                                 </div>
 
                                 <div class="slds-m-top_small">
-                                    <lightning-textarea label="Comments" data-id="Paint_Comments"></lightning-textarea>
+                                    <lightning-textarea label="Additional Comments" data-id="PaintComments"></lightning-textarea>
                                 </div>
                             </div>
 
@@ -45,11 +45,11 @@
                                 <lightning-helptext content="Any scratches, or wrong color, etc.? Then leave the box unchecked."></lightning-helptext>
 
                                 <div class="slds-m-top_small">
-                                    <lightning-input type="checkbox" data-id="Appearance_Checkbox"></lightning-input>
+                                    <lightning-input type="checkbox" data-id="AppearanceCheckbox"></lightning-input>
                                 </div>
 
                                 <div class="slds-m-top_small">
-                                    <lightning-textarea label="Comments" data-id="Appearance_Comments"></lightning-textarea>
+                                    <lightning-textarea label="Additional Comments" data-id="AppearanceComments"></lightning-textarea>
                                 </div>
                             </div>
 
@@ -61,11 +61,11 @@
                                 <lightning-helptext content="Any exposed wires, or shorting circuits, etc.? Then leave the box unchecked."></lightning-helptext>
 
                                 <div class="slds-m-top_small">
-                                    <lightning-input type="checkbox" data-id="Electrical_Checkbox"></lightning-input>
+                                    <lightning-input type="checkbox" data-id="ElectricalCheckbox"></lightning-input>
                                 </div>
 
                                 <div class="slds-m-top_small">
-                                    <lightning-textarea label="Comments" data-id="Electrical_Comments"></lightning-textarea>
+                                    <lightning-textarea label="Additional Comments" data-id="ElectricalComments"></lightning-textarea>
                                 </div>
                             </div>
 
@@ -77,11 +77,11 @@
                                 <lightning-helptext content="Anything hydraulic loose, or leaking, etc.? Then leave the box unchecked."></lightning-helptext>
 
                                 <div class="slds-m-top_small">
-                                    <lightning-input type="checkbox" data-id="Hydraulics_Checkbox"></lightning-input>
+                                    <lightning-input type="checkbox" data-id="HydraulicsCheckbox"></lightning-input>
                                 </div>
 
                                 <div class="slds-m-top_small">
-                                    <lightning-textarea label="Comments" data-id="Hydraulics_Comments"></lightning-textarea>
+                                    <lightning-textarea label="Additional Comments" data-id="HydraulicsComments"></lightning-textarea>
                                 </div>
                             </div>
 
@@ -93,22 +93,27 @@
                                 <lightning-helptext content="Anything not working properly that wasn't already mentioned, etc.? Then leave the box unchecked."></lightning-helptext>
 
                                 <div class="slds-m-top_small">
-                                    <lightning-input type="checkbox" data-id="Functionality_Checkbox"></lightning-input>
+                                    <lightning-input type="checkbox" data-id="FunctionalityCheckbox"></lightning-input>
                                 </div>
 
                                 <div class="slds-m-top_small">
-                                    <lightning-textarea label="Comments" data-id="Functionality_Comments"></lightning-textarea>
+                                    <lightning-textarea label="Additional Comments" data-id="FunctionalityComments"></lightning-textarea>
                                 </div>
                             </div>
                         </div>
 
                         <div class="slds-m-top_medium">
-                            <lightning-textarea label="Comments" data-id="Comments"></lightning-textarea>
+                            <lightning-textarea label="General Comments" data-id="GeneralComments"></lightning-textarea>
+                        </div>
+
+
+                        <div class="slds-align_absolute-center slds-m-top_large">
+                            <lightning-button variant="brand" label="Submit" onclick={handleSubmit}></lightning-button>
                         </div>
                     </template>
 
 
-                    <template if:false={isKnown_Opportunity}>
+                    <template if:false={opporutunityChosen}>
                         <div class="slds-text-body_regular">
                             Enter the name of an Opportunity to open a survey for it.
                         </div>
@@ -132,15 +137,17 @@
     </div>
 
 
-<div class="slds-align_absolute-center">
-    <div>
-        <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
-            <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
-                Opportunity
-            </div>
 
-            <div class="slds-size_medium slds-box slds-box_xx-small">
-                <template if:true={isKnown_Opportunity}>
+    <div class="slds-align_absolute-center">
+        <div>
+
+            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
+                <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
+                    Opportunity
+                </div>
+
+                <div class="slds-box slds-box_xx-small">
+                    <template if:true={opporutunityChosen}>
                         <div class="">
                             <div class="slds-text-body_regular">
                                 Name
@@ -150,7 +157,7 @@
                                 value="Opportunity URL Here"
                                 label="Opportunity Name Here"
                                 target="_blank"
-                                data-id="Opportunity_Name">
+                                data-id="OpportunityName">
                             </lightning-formatted-url>
                         </div>
 
@@ -163,7 +170,7 @@
                                 value="Opportunity Owner URL Here"
                                 label="Opportunity Owner Name Here"
                                 target="_blank"
-                                data-id="Opportunity_Owner">
+                                data-id="OpportunityOwner">
                             </lightning-formatted-url>
                         </div>
 
@@ -174,55 +181,166 @@
 
                             <lightning-formatted-date-time
                                 value="2077-11-05"
-                                data-id="Opportunity_CloseDate">
+                                data-id="OpportunityCloseDate">
                             </lightning-formatted-date-time>
                         </div>
                     </template>
 
 
-                <template if:false={isKnown_Opportunity}>
+                    <template if:false={opporutunityChosen}>
                         <div class="slds-text-body_regular">
                             Enter an Opportunity above to display its record here.
                         </div>
                     </template>
-            </div>
-        </div>
-
-
-        <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
-            <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
-                Products
+                </div>
             </div>
 
-            <div class="slds-size_medium slds-box slds-box_xx-small">
-                <template if:true={isKnown_Opportunity}>
-                        <template if:true={hasProducts}>
 
-                        </template>
 
-                <template if:false={hasProducts}>
+            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
+                <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
+                    Products
+                </div>
+
+                <div class="slds-clearfix slds-box slds-box_xx-small">
+                    <template if:true={opporutunityChosen}>
+
+                            <template if:true={productsFromOpportunity}>
+
+                                <template for:each={productsFromOpportunity} for:item="product">
+                                    <div class="slds-m-around_small slds-box slds-box_xx-small"  key={product.Id}>
+                                        
+                                        <div>
+                                            <div class="slds-text-body_regular">
+                                                Opportunity Product Name
+                                            </div>
+            
+                                            <lightning-formatted-url
+                                                value={product.OpportunityLineItemURL}
+                                                label={product.OpportunityLineItemName}
+                                                target="_blank">
+                                            </lightning-formatted-url>
+                                        </div>
+
+
+                                        <div class="slds-m-top_small">
+                                            <div class="slds-text-body_regular">
+                                                Product Name
+                                            </div>
+            
+                                            <lightning-formatted-url
+                                                value={product.Product2URL}
+                                                label={product.Product2Name}
+                                                target="_blank">
+                                            </lightning-formatted-url>
+                                        </div>
+
+
+                                        <div class="slds-m-top_small">
+                                            <div class="slds-text-body_regular">
+                                                Product Type
+                                            </div>
+            
+                                            <div class="slds-m-right_small slds-text-heading_small">
+                                                {product.Type}
+                                            </div>
+                                        </div>
+
+                                        <template if:true={product.Body_Make}>
+                                            <div class="slds-m-top_small">
+                                                <div class="slds-text-body_regular">
+                                                    Body Make
+                                                </div>
+                
+                                                <div class="slds-m-right_small slds-text-heading_small">
+                                                    {product.Body_Make}
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <template if:true={product.Body_Model}>
+                                            <div class="slds-m-top_small">
+                                                <div class="slds-text-body_regular">
+                                                    Body Model
+                                                </div>
+                
+                                                <div class="slds-m-right_small slds-text-heading_small">
+                                                    {product.Body_Model}
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <template if:true={product.Chassis_Make}>
+                                            <div class="slds-m-top_small">
+                                                <div class="slds-text-body_regular">
+                                                    Chassis Make
+                                                </div>
+                
+                                                <div class="slds-m-right_small slds-text-heading_small">
+                                                    {product.Chassis_Make}
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <template if:true={product.Chassis_Model}>
+                                            <div class="slds-m-top_small">
+                                                <div class="slds-text-body_regular">
+                                                    Chassis Model
+                                                </div>
+                
+                                                <div class="slds-m-right_small slds-text-heading_small">
+                                                    {product.Chassis_Model}
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <template if:true={product.Lube_Type}>
+                                            <div class="slds-m-top_small">
+                                                <div class="slds-text-body_regular">
+                                                    Lube Type
+                                                </div>
+                
+                                                <div class="slds-m-right_small slds-text-heading_small">
+                                                    {product.Lube_Type}
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                    </div>
+                                </template>
+
+                            </template>
+
+
+                        <template if:false={productsFromOpportunity}>
+
                             <div class="slds-text-body_regular">
                                 No products to display for this Opportunity.
                             </div>
+
                         </template>
-                </template>
+
+                    </template>
 
 
-                <template if:false={isKnown_Opportunity}>
+
+                    <template if:false={opporutunityChosen}>
                         <div class="slds-text-body_regular">
                             Enter an Opportunity above to display the products that were sold here.
                         </div>
                     </template>
-            </div>
-        </div>
-
-        <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
-            <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
-                Account
+                </div>
             </div>
 
-            <div class="slds-size_medium slds-box slds-box_xx-small">
-                <template if:true={isKnown_Opportunity}>
+
+
+            <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
+                <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
+                    Account
+                </div>
+
+                <div class="slds-size_large slds-box_xx-small">
+                    <template if:true={opporutunityChosen}>
                         <div class="">
                             <div class="slds-text-body_regular">
                                 Account Name
@@ -232,8 +350,23 @@
                                 value="Account URL Here"
                                 label="Account Name Here"
                                 target="_blank"
-                                data-id="Account_Name">
+                                data-id="AccountName">
                             </lightning-formatted-url>
+                        </div>
+
+                        <div class="slds-m-top_small">
+                            <div class="slds-text-body_regular">
+                                Account Contacts
+                            </div>
+
+                            <div style="height: 225px;">
+                                <lightning-datatable
+                                    key-field="Id"
+                                    data={accountContactsData}
+                                    columns={accountContactsColumns}
+                                    data-id="AccountContacts">
+                                </lightning-datatable>
+                            </div>
                         </div>
 
                         <div class="slds-m-top_small">
@@ -243,7 +376,7 @@
 
                             <lightning-formatted-phone
                                 value="Account PhoneNumber Here"
-                                data-id="Account_Phone">
+                                data-id="AccountPhone">
                             </lightning-formatted-phone>
                         </div>
 
@@ -258,7 +391,7 @@
                                 country="Country"
                                 province="State"
                                 postal-code="PostalCode"
-                                data-id="Account_Billing_Address">
+                                data-id="AccountBillingAddress">
                             </lightning-formatted-address>
                         </div>
 
@@ -273,19 +406,19 @@
                                 country="Country"
                                 province="State"
                                 postal-code="PostalCode"
-                                data-id="Account_Shipping_Address">
+                                data-id="AccountShippingAddress">
                             </lightning-formatted-address>
                         </div>
                     </template>
 
 
-                <template if:false={isKnown_Opportunity}>
+                    <template if:false={opporutunityChosen}>
                         <div class="slds-text-body_regular">
                             Enter an Opportunity above to display the information of the associated account here.
                         </div>
                     </template>
+                </div>
             </div>
         </div>
     </div>
-</div>
 </template>

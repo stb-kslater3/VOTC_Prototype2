@@ -1,0 +1,53 @@
+
+class Data_Manager {
+    // records holds data like so
+    /*
+    [
+        // each object is a record
+        {
+            // api field name gets mapped to object that holds values
+            fieldName1: {value1: . . ., value 2: . . . },
+            fieldName2: { . . . }
+            . . .
+        }, 
+        {}
+    ]
+    */
+    // if value is object then it goes to the fieldname as is, but otherwise make an object that holds
+    // the value and give it a name
+    // So BillingAddress is directly handed to fieldname, but opportunity owner is handed to 
+    records;
+
+    constructor() {
+
+    }
+
+    getData() {
+
+    }
+
+    insertData() {
+
+    }
+}
+
+
+class Apex_FieldName {
+    name; // api field name
+    willGet; // boolean
+    willInsert; // boolean
+}
+
+class Apex_Data_Manager extends Data_Manager {
+    objectName;
+    fieldNames;
+
+    constructor() {
+
+    }
+}
+
+
+class URL_Data_Manager extends Data_Manager {
+
+}

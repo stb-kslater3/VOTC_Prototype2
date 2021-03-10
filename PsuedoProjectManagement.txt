@@ -1,0 +1,92 @@
+
+VOTC PROJECT EXAMPLE:
+Data
+    - Survey Data
+        - Fields
+            - Paint Checkbox
+            - Paint Comment
+            - Appearance Checkbox
+            - . . .
+        - Sources
+            - Call to Apex getRecordsWhere
+                - Made once Opportunity is known
+                    - Either immediately from URL or when using FindOpportunity Tool
+                - Made on VOTC_Survey__c with Opportunity Id
+        - Sinks
+            - Call to Apex updateRecordFromId or insertRecord
+                - Once survey is filled out and submit button is hit and submission criteria are satisfied
+
+    - Opportunity View Data
+        - Fields
+            - Name
+            - Opportunity Owner
+            - Close Date
+        - Sources
+            - Call to Apex getRecordFromId
+                - Made once Opportunity is known
+                    - Either immediately from URL or when using FindOpportunity Tool
+            - URLs from NavigationMixIn
+        - Sinks
+            - NONE
+
+    - Product View Data
+        - Fields
+            - . . .
+        - Sources
+            - Call to Apex getRecordFromId
+                - Made once Opportunity is known
+                    - Either immediately from URL or when using FindOpportunity Tool
+        - Sinks
+            - NONE
+
+    - Account Data
+        - Fields
+            - . . .
+            - BillingAddress
+                - Given as JSON Object rather than immediate value
+                - Has keys Street, City, etc.
+        - Sources
+            - Call to Apex getRecordFromId
+                - Made once Opportunity is known
+                    - Either immediately from URL or when using FindOpportunity Tool
+            - URLs from NavigationMixIn
+        - Sinks
+            - NONE
+
+DOM
+    - Survey DOM
+        - Input Fields
+        - Output Fields
+        - Each DOM Element has labels to Set
+
+    - Opportunity DOM
+    - Products DOM
+    - Account DOM
+
+. . .
+
+
+Wierd Things:
+    - BillingAddress from Apex is JSON Object
+        - All values need to be layered to a common layer for a standard interface
+            - immediate values get stored in an Object with just one value
+
+    - PickLists
+        - Get data for options
+
+
+
+Project Walkthrough:
+
+    1. Make the Layout . . .
+        i. Make the HTML
+            - Use Lightning Components and Lightning Design System
+            - Create Stubs of Components all around and get a responsive page together
+
+    2. Set up the DOM Manager
+        i. Make the DOM references, and have them include information about what data they will depend on so that
+        changes made to either will be reflected. Like if data changes update DOM, and if DOM recieves input then update Data.
+            - Keep references to Names of Keys or Something so that we can call Standard Methods and do all the updating without
+            implementing the update approach in 100 different places
+
+    3. Set up the Data Manager

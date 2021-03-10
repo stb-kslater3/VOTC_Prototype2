@@ -1,8 +1,9 @@
 
-Record Array extends Array {
-    
+Record Collection {
+    Holds Map of Arrays Records.
+    Interface so it is interchangeable.
+     . . .
 }
-
 
 Data Manager {
     list of fields;

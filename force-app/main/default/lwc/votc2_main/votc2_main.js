@@ -4,866 +4,463 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 import { NavigationMixin } from "lightning/navigation";
 
-import getRecordFromId from '@salesforce/apex/ApexDataInterface.getRecordFromId';
-import getRecordsWhere from '@salesforce/apex/ApexDataInterface.getRecordsWhere';
-import insertRecord from '@salesforce/apex/ApexDataInterface.insertRecord';
+import queryFromString from '@salesforce/apex/ApexDataInterface.queryFromString';
 
 
 
-// ------------------------------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------------------------------------------------------------------
-/*
- * A layered data management approach
- * 
- * Data Manager provides a standard interface to all your data needs from a common source, whether those needs be a collection
- * of apex records from a given object, or a single URL from the NavigationMixIn, all data will be held by some implementation
- * of the Data_Manager and its children.
- * 
- * A Data Manager holds a collection of Records, Records hold a collection of Fields, Fields hold a collection of Values. Values
- * hold an actual single value and other data as needed, as well as common methods.
- * Put another way . . .
- * Data Managers are clients to their 1 Record Server.
- * Records are a Server to their 1 Data Manager and a client to their OneOrMany Fields Servers.
- * Fields are a Server to their 1 Record, and a Client to the OneOrMany Value Servers.
- * Values are servers to their 1 Fields.
- * 
- * Each layer holds an implementation of an interface that handles the types of problems that come up at that layer.
- * 
- * Data Manager Interface: holds a collection of records and standard methods to work with that collection and holds other necessary
- * data.
- * 
- * Record Interface: 
- * 
- * Field Interface: 
- * 
- * Value Interface:
-*/
-
-class Record_Array extends Array {
-
-}
-
-
-// . . .
-class Data_Manager {
-    recordArray;
-
-    constructor() {
-
-    }
-}
-
-class Apex_Data_Manager extends Data_Manager {
-    objectName;
-
-    constructor() {
-        super();
-    }
-}
-
-
-class Data_Record {
-    fields;
-
-    constructor() {
-
-    }
-}
-
-class Data_Field {
-    values;
-
-    constructor() {
-
-    }
-}
-
-class Data_Value {
-    value;
-
-    constructor() {
-        
-    }
-}
-
-
-
-class DOM_Manager {
-
-}
-
-
-class Error_Manager {
-    
-}
-
-
-// ------------------------------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------------------------------------------------------------------
-
-
-class RecordCollection {
-    records;
-
-    constructor() {
-
-    }
-}
-
-class Record {
-    fields;
-
-    didGet;
-
-    constructor(fields) {
-        this.fields = fields;
-
-        this.didGet = false;
-    }
-}
-
-class Field {
-    value;
-
-    constructor() {
-
-    }
-}
-
-
-class ApexRecordCollection extends RecordCollection {
-    objectName;
-
-    
-
-    constructor() {
-        super();
-    }
-
-
-    getRecordsWhere(whereValuePairs) {
-        return getRecordsWhere({
-            objectName: this.objectName,
-
-            
-        }).then().catch();
-    }
-}
-
-class ApexRecord extends Record {
-    objectName;
-
-    constructor(objectName, apexFields) {
-        super(apexFields);
-
-        this.objectName = objectName;
-    }
-
-    get fieldNames() {
-        let fieldNames = [];
-
-        Object.keys(this.fields).forEach(key => {
-            if(this.fields[key].willGet) {
-                fieldNames.push(this.fields[key].fieldName);
-            }
-        });
-
-        return fieldNames;
-    }
-
-    setFieldsFromRecord(record) {
-        if (record) {
-            Object.keys(this.fields).forEach(key => {
-                if(this.fields[key].willGet) {
-                    let fieldSplit = this.fields[key].fieldName.split('.');
-                    let fieldValue = record[fieldSplit[0]];
-
-                    for (let i = 1; i < fieldSplit.length; i++) {
-                        fieldValue = fieldValue[fieldSplit[i]];
-                    }
-
-                    this.fields[key].value = fieldValue;
-
-                    this.didGet = true;
-                }
-            });
-        } else {
-            console.log("No data for record from " + this.objectName + ", recieved '" + record + "'");
-        }
-    }
-
-    getRecordFromId(id) {
-        return getRecordFromId({
-            objectName: this.objectName,
-            recordId: id,
-            fields: this.fieldNames
-        }).then(record => {
-            this.setFieldsFromRecord(record);
-        }).catch(err => {
-            const toast = new ShowToastEvent({
-                title: 'Error: getRecordId() for ' + this.objectName,
-                message: err.toString(),
-                variant: 'error',
-                mode: 'sticky'
-            });
-
-            //this.dispatchEvent(toast);
-
-            //alert("Unable to get data for record from " + this.objectName + ", see console logs for error");
-            //console.log(err);
-        });
-    }
-
-    handleError() {
-
-    }
-}
-
-class ApexField extends Field {
-    fieldName;
-
-    willGet;
-    willSet;
-
-    constructor(fieldName, willGet = false, willSet = false) {
-        super();
-
-        this.fieldName = fieldName;
-
-        this.willGet = willGet;
-        this.willSet = willSet;
-    }
-}
-
-
-
-class ApexRecordURL_Record extends Record {
-
-    constructor(fields) {
-        super(fields);
-    }
-}
-
-class ApexRecordURL_Field extends Field {
-    id;
-
-    constructor() {
-        super();
-    }
-
-    setId(id) {
-        this.id = id;
-    }
-}
-
-
-
-class DataElement {
+class LWC_Element {
+    // The Id used to query the dom for this specific element
     dataId;
-    attributes;
 
-    domReference;
+    // The reference to the dom element itself so its attributes can be read and written to and
+    // event listeners added, etc.
+    domElement;
 
-    didQuery;
+    // To ensure the dom is queried only once, since renderedCallback is run multiple times
+    isInitialized;
 
-    constructor(dataId, attributes) {
+    constructor(dataId) {
         this.dataId = dataId;
 
-        this.attributes = attributes;
-
-        this.didQuery = false;
+        this.isInitialized = false;
     }
 
 
-    initialize(templateReference) {
-        this.domReference = templateReference.querySelector("[data-id='" + this.dataId + "']");
+    queryDOM(templateReference) {
+        this.domElement = templateReference.querySelector("[data-id='" + this.dataId + "']");
 
-        this.didQuery = true;
-
-        Object.keys(this.attributes).forEach(key => {
-            this.attributes[key].domReference = this.domReference;
-        });
-    }
-
-
-    update() {
-        Object.keys(this.attributes).forEach(attrKey => {
-            this.attributes[attrKey].update();
-        });
-    }
-}
-
-
-class InputElement extends DataElement {
-    constructor(dataId, attributes) {
-        super(dataId, attributes);
-
-
-    }
-
-
-    initialize(templateReference, handler) {
-        DataElement.prototype.initialize.call(this, templateReference);
-
-        this.domReference.addEventListener("change", handler);
-    }
-}
-
-
-class DataAttribute {
-    name;
-    
-    domReference;
-
-    dataClass;
-    dataKey;
-
-    constructor(name, dataClass, dataKey) {
-        this.name = name;
-
-        this.dataClass = dataClass;
-        this.dataKey = dataKey;
-    }
-
-    
-    set value(value) {
-        this.domReference[this.name] = value;
-    }
-
-    update() {
-        let fieldSplit = this.dataKey.split('.');
-        let fieldValue = this.dataClass.fields[fieldSplit[0]].value;
-
-        for (let i = 1; i < fieldSplit.length; i++) {
-            fieldValue = fieldValue[fieldSplit[i]];
-        }
-
-        this.domReference[this.name] = fieldValue;
+        this.isInitialized = true;
     }
 }
 
 
 
 export default class Votc2_main extends NavigationMixin(LightningElement) {
-    @track isKnown_Opportunity;
-    isHandled_URL;
-    TEMPID;
+    @track opporutunityChosen;
+    findOpportunityElement;
 
-
-    opportunityLookupElement;
-
-    @track opportunityRecord;
-    @track opportunityURLRecord;
-    opportunityElements;
-    
-    @track surveyRecord;
     surveyElements;
 
-    @track accountRecord;
-    @track accountURLRecord;
+    opportunityElements;
+
+    @track productsFromOpportunity;
+
     accountElements;
+    accountFromOpportunity;
+    @track accountContactsData;
+    @track accountContactsColumns;
+
+
+    displayError(title, errorMessage) {
+        const errorToast = new ShowToastEvent({
+            title: title,
+            message: errorMessage,
+            variant: 'error',
+            mode: 'sticky'
+        });
+
+        console.log(errorMessage);
+
+        this.dispatchEvent(errorToast);
+    }
+
+
+    handleDOMInput(event) {
+        switch(event.target.getAttribute("data-id")) {
+            case 'OpportunityLookup':
+                this.opporutunityChosen = this.findOpportunityElement.domElement.value;
+
+                this.handleOpportunityChosen();
+
+                break;
+
+
+
+            case 'PaintCheckbox':
+                //console.log(this.surveyElements.PaintCheckbox.domElement.checked);
+                break;
+
+            case 'PaintComments':
+                //console.log(this.surveyElements.PaintComments.domElement.value);
+                break;
+
+            case 'AppearanceCheckbox':
+                //console.log(this.surveyElements.AppearanceCheckbox.domElement.checked);
+                break;
+
+            case 'AppearanceComments':
+                //console.log(this.surveyElements.AppearanceComments.domElement.value);
+                break;
+
+            case 'ElectricalCheckbox':
+                //console.log(this.surveyElements.ElectricalCheckbox.domElement.checked);
+                break;
+
+            case 'ElectricalComments':
+                //console.log(this.surveyElements.ElectricalComments.domElement.value);
+                break;
+
+            case 'HydraulicsCheckbox':
+                //console.log(this.surveyElements.HydraulicsCheckbox.domElement.checked);
+                break;
+
+            case 'HydraulicsComments':
+                //console.log(this.surveyElements.HydraulicsComments.domElement.value);
+                break;
+
+            case 'FunctionalityCheckbox':
+                //console.log(this.surveyElements.FunctionalityCheckbox.domElement.checked);
+                break;
+
+            case 'FunctionalityComments':
+                //console.log(this.surveyElements.FunctionalityComments.domElement.value);
+                break;
+
+            case 'GeneralComments':
+                //console.log(this.surveyElements.GeneralComments.domElement.value);
+                break;
+
+
+
+            default:
+                break;
+        }
+    }
+
+
+    
+    handleSubmit() {
+console.log('Submit');
+    }
+
+
+
+    loadSurveyData() {
+        queryFromString({
+            queryString: 'SELECT Appearance__c, Appearance_Comment__c, Comments__c, Electrical__c, Electrical_Comment__c, Functionality__c, Functionality_Comment__c, Opportunity__c, Paint__c, Paint_Comment__c, Unfaulty__c, Unfaulty_Comment__c' +
+            ' FROM VOTC_Survey__c' +
+            ' WHERE Opportunity__c=\'' + this.opporutunityChosen + '\'' +
+            ' LIMIT 1'
+        }).then(records => {
+            if(records.length > 0) {
+                this.surveyElements.PaintCheckbox.domElement.checked = records[0].Paint__c;
+                this.surveyElements.PaintComments.domElement.value = records[0].Paint_Comment__c;
+
+                this.surveyElements.AppearanceCheckbox.domElement.checked = records[0].Appearance__c;
+                this.surveyElements.AppearanceComments.domElement.value = records[0].Appearance_Comment__c;
+
+                this.surveyElements.ElectricalCheckbox.domElement.checked = records[0].Electrical__c;
+                this.surveyElements.ElectricalComments.domElement.value = records[0].Electrical_Comment__c;
+
+                this.surveyElements.HydraulicsCheckbox.domElement.checked = records[0].Unfaulty__c;
+                this.surveyElements.HydraulicsComments.domElement.value = records[0].Unfaulty_Comment__c;
+
+                this.surveyElements.FunctionalityCheckbox.domElement.checked = records[0].Functionality__c;
+                this.surveyElements.FunctionalityComments.domElement.value = records[0].Functionality_Comment__c;
+
+                this.surveyElements.GeneralComments.domElement.value = records[0].Comments__c;
+            }
+        }).catch(err => {
+            this.displayError('Error in call to queryFromString for VOTC_Survey__c', err.body.message);
+        });
+    }
+
+
+    loadOpportunityData() {
+        // Returns the promise from when this data is loaded since other data depends on it, so those are synchronous
+        return queryFromString({
+            queryString: 'SELECT Name, Owner.Name, CloseDate, AccountId' +
+            ' FROM Opportunity' +
+            ' WHERE Id=\'' + this.opporutunityChosen + '\'' +
+            ' LIMIT 1'
+        }).then(records => {
+            if(records.length > 0) {
+            this.opportunityElements.OpportunityName.domElement.label = records[0].Name;
+
+            this.opportunityElements.OpportunityOwner.domElement.label = records[0].Owner.Name;
+
+            this.opportunityElements.OpportunityCloseDate.domElement.value = records[0].CloseDate;
+
+
+            this.accountFromOpportunity = records[0].AccountId;
+            }
+        }).catch(err => {
+            this.displayError('Error in then of call to queryFromString for Opportunity', err.body.message);
+        });
+    }
+
+
+    loadProductsData() {
+        queryFromString({
+            queryString: 'SELECT Id, Name, Product2Id, Product2.Name, Product2.RecordType.Name, Product2.Body_Make__c, Product2.Body_Model__c, Product2.Chassis_Make__c, Product2.Chassis_Model__c, Product2.Lube_Type__c' +
+            ' FROM OpportunityLineItem' +
+            ' WHERE OpportunityId=\'' + this.opporutunityChosen + '\''
+        }).then(records => {
+            this.productsFromOpportunity = [];
+
+
+            for(let i = 0; i < records.length; i++) {
+                // Because things are Asynchronous you need to update the values all at the same time
+                // And figure out which to update with the NavigationMixIn later
+                this.productsFromOpportunity.push({
+                    OpportunityLineItemName: records[i].Name,
+
+                    Product2Name: records[i].Product2.Name,
+
+                    Type: records[i].Product2.RecordType.Name,
+
+                    Body_Make: records[i].Product2.Body_Make__c,
+
+                    Body_Model: records[i].Product2.Body_Model__c,
+
+                    Chassis_Make: records[i].Product2.Chassis_Make__c,
+
+                    Chassis_Model: records[i].Product2.Chassis_Model__c,
+
+                    Lube_Type: records[i].Product2.Lube_Type__c
+                });
+
+
+
+                this[NavigationMixin.GenerateUrl]({
+                    type: "standard__recordPage",
+                    attributes: {
+                        recordId: records[i].Id,
+                        actionName: "view"
+                    }
+                }).then(url => {
+                    this.productsFromOpportunity[i].OpportunityLineItemURL = window.location.origin + url;
+
+                }).catch(err => {
+                    this.displayError('Error in then of NavigationMixIn for OpportunityLineItem', err.message);
+                });
+
+
+
+                this[NavigationMixin.GenerateUrl]({
+                    type: "standard__recordPage",
+                    attributes: {
+                        recordId: records[i].Product2Id,
+                        actionName: "view"
+                    }
+                }).then(url => {
+                    this.productsFromOpportunity[i].Product2URL = window.location.origin + url;
+
+                }).catch(err => {
+                    this.displayError('Error in then of NavigationMixIn for Product2', err.message);
+                });
+                
+            }
+
+        }).catch(err => {
+            this.displayError('Error in then of call to queryFromString for OpportunityLineItem', err.body.message);
+        });
+    }
+
+
+    loadAccountsData() {
+        queryFromString({
+            queryString: 'SELECT Name, Phone, BillingAddress, ShippingAddress' +
+            ' FROM Account' +
+            ' WHERE Id=\'' + this.accountFromOpportunity + '\'' +
+            ' LIMIT 1'
+        }).then(records => {
+            if(records.length > 0) {
+                this.accountElements.AccountName.domElement.label = records[0].Name;
+
+                this.accountElements.AccountPhone.domElement.value = records[0].Phone;
+
+                this.accountElements.AccountBillingAddress.domElement.street = records[0].BillingAddress.street;
+                this.accountElements.AccountBillingAddress.domElement.city = records[0].BillingAddress.city;
+                this.accountElements.AccountBillingAddress.domElement.province = records[0].BillingAddress.state;
+                this.accountElements.AccountBillingAddress.domElement.postalCode = records[0].BillingAddress.postalCode;
+                this.accountElements.AccountBillingAddress.domElement.country = records[0].BillingAddress.country;
+
+                this.accountElements.AccountShippingAddress.domElement.street = records[0].ShippingAddress.street;
+                this.accountElements.AccountShippingAddress.domElement.city = records[0].ShippingAddress.city;
+                this.accountElements.AccountShippingAddress.domElement.province = records[0].ShippingAddress.state;
+                this.accountElements.AccountShippingAddress.domElement.postalCode = records[0].ShippingAddress.postalCode;
+                this.accountElements.AccountShippingAddress.domElement.country = records[0].ShippingAddress.country;
+            }
+        }).catch(err => {
+            this.displayError('Error in call to queryFromString for Account', err.body.message);
+        });
+
+
+        // AccountContacts data for actual contacts associated with that account
+        queryFromString({
+            queryString: 'SELECT Id, Name, Phone, Email, HasOptedOutOfEmail' +
+            ' FROM Contact' +
+            ' WHERE AccountId=\'' + this.accountFromOpportunity + '\''
+        }).then(records => {
+            this.accountContactsData = records;
+        }).catch(err => {
+            this.displayError('Error in call to queryFromString for Contact', err.body.message);
+        });
+    }
+
+
+    handleOpportunityChosen() {
+        this.loadSurveyData();
+
+        this.loadOpportunityData().then(() => {
+            this.loadAccountsData();
+
+            this[NavigationMixin.GenerateUrl]({
+                type: "standard__recordPage",
+                attributes: {
+                    recordId: this.accountFromOpportunity,
+                    actionName: "view"
+                }
+            }).then(url => {
+                this.accountElements.AccountName.domElement.value = window.location.origin + url;
+            }).catch(err => {
+                this.displayError('Error in then of NavigationMixIn for Opportunity', err.message);
+            });
+
+            this.loadProductsData();
+        }).catch(err => {
+            this.displayError('Error in then of loadOpportunityData', err.message);
+        });
+
+
+        this[NavigationMixin.GenerateUrl]({
+            type: "standard__recordPage",
+            attributes: {
+                recordId: this.opporutunityChosen,
+                actionName: "view"
+            }
+        }).then(url => {
+            this.opportunityElements.OpportunityName.domElement.value = window.location.origin + url;
+        }).catch(err => {
+            this.displayError('Error in then of NavigationMixIn for Opportunity', err.message);
+        });
+    }
+
 
 
     handleURLParameters() {
-        let page_url = new URL(window.location.href);
+        let url = new URL(window.location.href);
 
-        let urlParamOppId = page_url.searchParams.get("c__opportunityId");
+        let url_opportunity = url.searchParams.get("c__opportunityId");
 
-        if (urlParamOppId) {
-            //            this.opportunityChosen = urlParamOppId;
-            this.TEMPID = urlParamOppId;
-            this.isKnown_Opportunity = true;
-        } else {
-            console.log(
-                'No URL Parameter given, or a Bad URL Parameter given, not necessary unless you intended to pass a parameter. The only parameter currently is "c__opportunityId" set it to a valid opportunity id with "c__opportunityId=123456789012345678" where the numbers are a valid Id'
-            );
+        if (url_opportunity) {
+            this.opporutunityChosen = url_opportunity;
+
+            this.handleOpportunityChosen();
+        }
+    }
+
+
+    createLWC_Elements() {
+        if(!this.findOpportunityElement) {
+            this.findOpportunityElement = new LWC_Element('OpportunityLookup');
         }
 
-        this.isHandled_URL = true;
+
+        if(!this.surveyElements) {
+            this.surveyElements = {};
+
+            this.surveyElements.PaintCheckbox = new LWC_Element('PaintCheckbox');
+            this.surveyElements.PaintComments = new LWC_Element('PaintComments');
+
+            this.surveyElements.AppearanceCheckbox = new LWC_Element('AppearanceCheckbox');
+            this.surveyElements.AppearanceComments = new LWC_Element('AppearanceComments');
+
+            this.surveyElements.ElectricalCheckbox = new LWC_Element('ElectricalCheckbox');
+            this.surveyElements.ElectricalComments = new LWC_Element('ElectricalComments');
+
+            this.surveyElements.HydraulicsCheckbox = new LWC_Element('HydraulicsCheckbox');
+            this.surveyElements.HydraulicsComments = new LWC_Element('HydraulicsComments');
+
+            this.surveyElements.FunctionalityCheckbox = new LWC_Element('FunctionalityCheckbox');
+            this.surveyElements.FunctionalityComments = new LWC_Element('FunctionalityComments');
+
+            this.surveyElements.GeneralComments = new LWC_Element('GeneralComments');
+        }
+
+
+        if(!this.opportunityElements) {
+            this.opportunityElements = {};
+
+            this.opportunityElements.OpportunityName = new LWC_Element('OpportunityName');
+
+            this.opportunityElements.OpportunityOwner = new LWC_Element('OpportunityOwner');
+
+            this.opportunityElements.OpportunityCloseDate = new LWC_Element('OpportunityCloseDate');
+        }
+
+
+        if(!this.accountElements) {
+            this.accountElements = {};
+
+            this.accountElements.AccountName = new LWC_Element('AccountName');
+
+            this.accountElements.AccountContacts = new LWC_Element('AccountContacts');
+
+            this.accountElements.AccountPhone = new LWC_Element('AccountPhone');
+
+            this.accountElements.AccountBillingAddress = new LWC_Element('AccountBillingAddress');
+
+            this.accountElements.AccountShippingAddress = new LWC_Element('AccountShippingAddress');
+        }
     }
 
 
     constructor() {
         super();
 
-        if (!this.isHandled_URL) {
-            this.handleURLParameters();
-        }
-
-
-        if(!this.opportunityLookupElement) {
-            this.opportunityLookupElement = new InputElement(
-                'OpportunityLookup',
-
-                {
-                    value: new DataAttribute('value', this.opportunityRecord, 'Id')
-                }
-            );
-        }
-
-
-        if(!this.opportunityRecord) {
-            this.opportunityRecord = new ApexRecord(
-                'Opportunity',
-
-                {
-                    Id: new ApexField('Id', true),
-
-                    Name: new ApexField('Name', true),
-
-                    OwnerId: new ApexField('OwnerId', true),
-
-                    OwnerName: new ApexField('Owner.Name', true),
-
-                    CloseDate: new ApexField('CloseDate', true),
-
-                    AccountId: new ApexField('AccountId', true)
-                }
-            );
-        }
-        if(!this.opportunityURLRecord) {
-            this.opportunityURLRecord = new ApexRecordURL_Record(
-                {
-                    OpportunityNameURL: new ApexRecordURL_Field(),
-                    OpportunityOwnerURL: new ApexRecordURL_Field()
-                }
-            );
-        }
-        if(!this.opportunityElements) {
-            this.opportunityElements = {
-                Opportunity_Name: new DataElement(
-                    'Opportunity_Name',
-
-                    {
-                        value: new DataAttribute('value', this.opportunityURLRecord, 'OpportunityNameURL'),
-                        label: new DataAttribute('label', this.opportunityRecord, 'Name')
-                    }
-                ),
-
-                Opportunity_Owner: new DataElement(
-                    'Opportunity_Owner',
-
-                    {
-                        value: new DataAttribute('value', this.opportunityURLRecord, 'OpportunityOwnerURL'),
-                        label: new DataAttribute('label', this.opportunityRecord, 'OwnerName')
-                    }
-                ),
-
-                Opportunity_CloseDate: new DataElement(
-                    'Opportunity_CloseDate',
-
-                    {
-                        value: new DataAttribute('value', this.opportunityRecord, 'CloseDate')
-                    }
-                )
-            };
-        }
-
-        if(!this.surveyRecord) {
-            this.surveyRecord = new ApexRecord(
-                'VOTC_Survey__c',
-
-                {
-                    Paint: new ApexField('Paint__c', true, true),
-                    Paint_Comments: new ApexField('Paint_Comment__c', true, true),
-
-                    //Appearance: new ApexField('Appearance__c', true, true),
-                    Appearance: new ApexField('Appearance', true, true),
-                    Appearance_Comments: new ApexField('Appearance_Comment__c', true, true),
-
-                    Electrical: new ApexField('Electrical__c', true, true),
-                    Electrical_Comments: new ApexField('Electrical_Comment__c', true, true),
-
-                    Hydraulics: new ApexField('Unfaulty__c', true, true),
-                    Hydraulics_Comments: new ApexField('Unfaulty_Comment__c', true, true),
-
-                    Functionality: new ApexField('Functionality__c', true, true),
-                    Functionality_Comments: new ApexField('Functionality_Comment__c', true, true),
-
-                    Comments: new ApexField('Comments__c', true, true)
-                }
-            );
-        }
-        if(!this.surveyElements) {
-            this.surveyElements = {
-                Paint_Checkbox: new InputElement(
-                    'Paint_Checkbox',
-
-                    {
-                        value: new DataAttribute('value', this.surveyRecord, 'Paint')
-                    }
-                ),
-                Paint_Comments: new InputElement(
-                    'Paint_Comments',
-
-                    {
-                        value: new DataAttribute('value', this.surveyRecord, 'Paint_Comments')
-                    }
-                ),
-
-                Appearance_Checkbox: new InputElement(
-                    'Appearance_Checkbox',
-
-                    {
-                        value: new DataAttribute('value', this.surveyRecord, 'Appearance')
-                    }
-                ),
-                Appearance_Comments: new InputElement(
-                    'Appearance_Comments',
-
-                    {
-                        value: new DataAttribute('value', this.surveyRecord, 'Appearance_Comments')
-                    }
-                ),
-
-                Electrical_Checkbox: new InputElement(
-                    'Electrical_Checkbox',
-
-                    {
-                        value: new DataAttribute('value', this.surveyRecord, 'Electrical')
-                    }
-                ),
-                Electrical_Comments: new InputElement(
-                    'Electrical_Comments',
-
-                    {
-                        value: new DataAttribute('value', this.surveyRecord, 'Electrical_Comments')
-                    }
-                ),
-
-                Hydraulics_Checkbox: new InputElement(
-                    'Hydraulics_Checkbox',
-
-                    {
-                        value: new DataAttribute('value', this.surveyRecord, 'Hydraulics')
-                    }
-                ),
-                Hydraulics_Comments: new InputElement(
-                    'Hydraulics_Comments',
-
-                    {
-                        value: new DataAttribute('value', this.surveyRecord, 'Hydraulics_Comments')
-                    }
-                ),
-
-                Functionality_Checkbox: new InputElement(
-                    'Functionality_Checkbox',
-
-                    {
-                        value: new DataAttribute('value', this.surveyRecord, 'Functionality')
-                    }
-                ),
-                Functionality_Comments: new InputElement(
-                    'Functionality_Comments',
-
-                    {
-                        value: new DataAttribute('value', this.surveyRecord, 'Functionality_Comments')
-                    }
-                ),
-
-                Comments: new InputElement(
-                    'Comments',
-
-                    {
-                        value: new DataAttribute('value', this.surveyRecord, 'Comments')
-                    }
-                )
-            };
-        }
-
-        if(!this.accountRecord) {
-            this.accountRecord = new ApexRecord(
-                'Account',
-
-                {
-                    Name: new ApexField('Name', true),
-
-                    Phone: new ApexField('Phone', true),
-
-                    BillingAddress: new ApexField('BillingAddress', true),
-
-                    ShippingAddress: new ApexField('ShippingAddress', true)
-                }
-            );
-        }
-        if(!this.accountURLRecord) {
-            this.accountURLRecord = new ApexRecordURL_Record(
-                {
-                    AccountPhoneURL: new ApexRecordURL_Field(),
-                }
-            );
-        }
-        if(!this.accountElements) {
-            this.accountElements = {
-                Account_Name: new DataElement(
-                    'Account_Name',
-
-                    {
-                        value: new DataAttribute('value', this.accountURLRecord, 'AccountPhoneURL'),
-                        label: new DataAttribute('label', this.accountRecord, 'Name')
-                    }
-                ),
-
-                Account_Phone: new DataElement(
-                    'Account_Phone',
-
-                    {
-                        value: new DataAttribute('value', this.accountRecord, 'Phone')
-                    }
-                ),
-
-                Account_Billing_Address: new DataElement(
-                    'Account_Billing_Address',
-
-                    {
-                        street: new DataAttribute('street', this.accountRecord, 'BillingAddress.street'),
-                        city: new DataAttribute('city', this.accountRecord, 'BillingAddress.city'),
-                        state: new DataAttribute('province', this.accountRecord, 'BillingAddress.state'),
-                        postalCode: new DataAttribute('postal-code', this.accountRecord, 'BillingAddress.postalCode'),
-                        country: new DataAttribute('country', this.accountRecord, 'BillingAddress.country'),
-                    }
-                ),
-
-                Account_Shipping_Address: new DataElement(
-                    'Account_Shipping_Address',
-
-                    {
-                        street: new DataAttribute('street', this.accountRecord, 'ShippingAddress.street'),
-                        city: new DataAttribute('city', this.accountRecord, 'ShippingAddress.city'),
-                        state: new DataAttribute('province', this.accountRecord, 'ShippingAddress.state'),
-                        postalCode: new DataAttribute('postal-code', this.accountRecord, 'ShippingAddress.postalCode'),
-                        country: new DataAttribute('country', this.accountRecord, 'ShippingAddress.country'),
-                    }
-                )
-            };
-        }
-        
-
-        if(this.isKnown_Opportunity) {
-            this.handleOpportunityChosen();
-        }
+        this.createLWC_Elements();
     }
 
 
-    handleError(errorCaller, titleAddon, errorMessage) {
-        let title = 'Error: Within call to ' + errorCaller + ' ' + titleAddon;
 
-        const toast = new ShowToastEvent({
-            title: title,
-            message: errorMessage.toString(),
-            variant: 'error',
-            mode: 'sticky'
-        });
+    connectedCallback() {
 
-        this.dispatchEvent(toast);
     }
-
-
-    handleOpportunityChosen() {
-console.log(this.surveyRecord);
-        if(!this.opportunityRecord.didGet) {
-            this.opportunityRecord.getRecordFromId(this.TEMPID).then(() => {
-                this.opportunityURLRecord.fields.OpportunityNameURL.setId(this.opportunityRecord.fields.Id.value);
-                this.opportunityURLRecord.fields.OpportunityOwnerURL.setId(this.opportunityRecord.fields.OwnerId.value);
-
-                this[NavigationMixin.GenerateUrl]({
-                    type: "standard__recordPage",
-                    attributes: {
-                        recordId: this.opportunityURLRecord.fields.OpportunityNameURL.id,
-                        actionName: "view"
-                    }
-                }).then(url => {
-                    this.opportunityURLRecord.fields.OpportunityNameURL.value = window.location.origin + url;
-                }).catch(err => {
-                    alert("Error in then of opportunity getRecordFromId, when trying to get the URL for opportunity");
-                    console.log(err);
-                });
-
-
-                this[NavigationMixin.GenerateUrl](
-                    {
-                        type: "standard__recordPage",
-                        attributes: {
-                            recordId: this.opportunityURLRecord.fields.OpportunityOwnerURL.id,
-                            actionName: "view"
-                        }
-                    }
-                ).then(url => {
-                    this.opportunityURLRecord.fields.OpportunityOwnerURL.value = window.location.origin + url;
-
-                    Object.keys(this.opportunityElements).forEach(elemKey => {
-                        this.opportunityElements[elemKey].update();
-                    });
-
-                }).catch(err => {
-                    alert("Error in then of opportunity getRecordFromId, when trying to get the URL for opportunity");
-                    console.log(err);
-                });
-
-            
-                if(!this.surveyRecord.didGet) {
-                    this.surveyRecord.getRecordFromId(this.opportunityRecord.fields.Id.value).then(() => {
-                        Object.keys(this.surveyElements).forEach(elemKey => {
-                            this.surveyElements[elemKey].update();
-                        });
-                    }).catch(err => {
-                        this.handleError('getRecordId().catch()', 'for ' + this.surveyRecord.objectName ,err);
-                    });
-                }
-
-
-                if(!this.accountRecord.didGet) {
-                    this.accountURLRecord.fields.AccountPhoneURL.setId(this.opportunityRecord.fields.AccountId.value);
-
-                    this.accountRecord.getRecordFromId(this.opportunityRecord.fields.AccountId.value).then(() => {
-                        this[NavigationMixin.GenerateUrl](
-                            {
-                                type: "standard__recordPage",
-                                attributes: {
-                                    recordId: this.accountURLRecord.fields.AccountPhoneURL.id,
-                                    actionName: "view"
-                                }
-                            }
-                        ).then(url => {
-                            this.accountURLRecord.fields.AccountPhoneURL.value = window.location.origin + url;
-        
-                            Object.keys(this.accountElements).forEach(elemKey => {
-                                this.accountElements[elemKey].update();
-                            });
-        
-                        }).catch(err => {
-                            alert("Error in then of account getRecordFromId, when trying to get the URL for account");
-                            console.log(err);
-                        });
-                    
-                    }).catch(err => {
-                        alert("Error in then of account getRecordFromId");
-                        console.log(err);
-                    });
-                }
-            
-            }).catch(err => {
-                alert("Error in then of opportunity getRecordFromId");
-                console.log(err);
-            });
-        }
-    }
-
 
 
 
     renderedCallback() {
-        if(!this.isKnown_Opportunity) {
-            if(!this.opportunityLookupElement.didQuery) {
-                this.opportunityLookupElement.initialize(this.template, this.handleInput.bind(this));
-            }
-        }
+        // If we haven't chosen an opportunity yet then the findOpportunityElement is displaying
+        // so go prepare it to get the chosen opportunity.
+        // Otherwise, go prepare the rest of the elements as needed.
+        if(!this.opporutunityChosen) {
+            this.handleURLParameters();
 
-        if(this.isKnown_Opportunity) {
-            if(!this.opportunityElements.Opportunity_Name.didQuery) {
-                Object.keys(this.opportunityElements).forEach(key => {
-                    this.opportunityElements[key].initialize(this.template);
-                });
+            if(!this.findOpportunityElement.isInitialized) {
+                this.findOpportunityElement.queryDOM(this.template);
+                
+                this.findOpportunityElement.domElement.addEventListener('change', this.handleDOMInput.bind(this));
             }
-            
-            if(!this.surveyElements.Paint_Checkbox.didQuery) {
-                Object.keys(this.surveyElements).forEach(key => {
-                    this.surveyElements[key].initialize(this.template, this.handleInput.bind(this));
-                });
+        }else {
+            if(!this.surveyElements.PaintCheckbox.isInitialized) {
+                for(const key in this.surveyElements) {
+                    this.surveyElements[key].queryDOM(this.template);
+
+                    this.surveyElements[key].domElement.addEventListener('change', this.handleDOMInput.bind(this));
+                }
             }
-            
-            if(!this.accountElements.Account_Name.didQuery) {
-                Object.keys(this.accountElements).forEach(key => {
-                    this.accountElements[key].initialize(this.template);
-                });
+
+            if(!this.opportunityElements.OpportunityName.isInitialized) {
+                for(const key in this.opportunityElements) {
+                    this.opportunityElements[key].queryDOM(this.template);
+                }
+            }
+
+            if(!this.accountElements.AccountName.isInitialized) {
+                for(const key in this.accountElements) {
+                    this.accountElements[key].queryDOM(this.template);
+                }
+
+                this.accountContactsColumns = [
+                    { label: 'Name', fieldName: 'Name', wrapText: true },
+                    { label: 'Phone', fieldName: 'Phone', type: 'phone', wrapText: true },
+                    { label: 'Email', fieldName: 'Email', type: 'email', wrapText: true },
+                    { label: 'Opted Out Email', fieldName: 'HasOptedOutOfEmail', type: 'boolean', wrapText: true }
+                ];
             }
         }
+        
     }
-
-
-    handleInput(event) {
-        let dataId = event.target.getAttribute("data-id");
-
-        if(this.isKnown_Opportunity) { // These only exist when an opportunity is known
-            if (dataId.includes('Checkbox')) {
-                this.surveyElements[dataId].value = this.surveyElements[dataId].domReference.checked;
-            } else {
-                this.surveyElements[dataId].value = this.surveyElements[dataId].domReference.value;
-            }
-
-            switch (dataId) {
-                case 'Paint_Checkbox':
-                    console.log(this.surveyElements['Paint_Checkbox'].value);
-                    break;
-
-                case 'Paint_Comments':
-                    console.log(this.surveyElements['Paint_Comments'].value);
-                    break;
-
-
-                case 'Appearance_Checkbox':
-                    console.log(this.surveyElements['Appearance_Checkbox'].value);
-                    break;
-
-                case 'Appearance_Comments':
-                    console.log(this.surveyElements['Appearance_Comments'].value);
-                    break;
-
-
-                case 'Electrical_Checkbox':
-                    console.log(this.surveyElements['Electrical_Checkbox'].value);
-                    break;
-
-                case 'Electrical_Comments':
-                    console.log(this.surveyElements['Electrical_Comments'].value);
-                    break;
-
-
-                case 'Hydraulics_Checkbox':
-                    console.log(this.surveyElements['Hydraulics_Checkbox'].value);
-                    break;
-
-                case 'Hydraulics_Comments':
-                    console.log(this.surveyElements['Hydraulics_Comments'].value);
-                    break;
-
-
-                case 'Functionality_Checkbox':
-                    console.log(this.surveyElements['Functionality_Checkbox'].value);
-                    break;
-
-                case 'Functionality_Comments':
-                    console.log(this.surveyElements['Functionality_Comments'].value);
-                    break;
-
-
-                case 'Comments':
-                    console.log(this.surveyElements['Comments'].value);
-                    break;
-
-
-                default:
-                    break;
-            }
-        }else {// These only exist when an opportunity is unknown
-            switch(dataId) {
-                case 'OpportunityLookup':
-                    this.opportunityLookupElement.value = this.opportunityLookupElement.domReference.value;
-
-                    this.TEMPID = this.opportunityLookupElement.value;
-                    this.isKnown_Opportunity = true;
-
-                    this.handleOpportunityChosen();
-
-                    break;
-
-
-                default:
-                    break;
-            }
-        }
-
-    }
-
-
 }
