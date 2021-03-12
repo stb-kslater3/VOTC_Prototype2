@@ -353,5 +353,4 @@ MigrationBackup/
 
 # ---------- Added By Me Below ------------------
 
-# Ignore Salesforce
-.sfdx/
+ANT/

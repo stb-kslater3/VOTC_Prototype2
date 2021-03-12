@@ -3,21 +3,30 @@
         <div>
             <div class="slds-float_left slds-m-around_small slds-box slds-theme_shade">
                 <div class="slds-m-bottom_small slds-text-heading_medium slds-align_absolute-center">
-                    <template if:true={opporutunityChosen}>
+                    <template if:true={opportunityChosen}>
                         Survey
                     </template>
 
 
-                    <template if:false={opporutunityChosen}>
+                    <template if:false={opportunityChosen}>
                         Find Opportunity
                     </template>
                 </div>
 
 
                 <div>
-                    <template if:true={opporutunityChosen}>
-                        <div class="slds-text-heading_small">
-                            Fill out the survey below. Be sure that . . .
+                    <template if:true={opportunityChosen}>
+                        <div>
+                            <b>Instructions:</b><br/>
+                            <ul class="slds-list_dotted">
+                                <li>
+                                    If the customer was satisfied with it then check the box. Otherwise, leave the box unchecked and mention why they were unsatisfied in the corresponding Additional Comments box.
+                                </li>
+
+                                <li>
+                                    In the General Comments box be sure to include any other comments or concerns that you feel are necessary, up to 255 characters.
+                                </li>
+                            </ul>
                         </div>
 
                         <div class="slds-clearfix slds-m-top_medium">
@@ -113,7 +122,7 @@
                     </template>
 
 
-                    <template if:false={opporutunityChosen}>
+                    <template if:false={opportunityChosen}>
                         <div class="slds-text-body_regular">
                             Enter the name of an Opportunity to open a survey for it.
                         </div>
@@ -147,7 +156,7 @@
                 </div>
 
                 <div class="slds-box slds-box_xx-small">
-                    <template if:true={opporutunityChosen}>
+                    <template if:true={opportunityChosen}>
                         <div class="">
                             <div class="slds-text-body_regular">
                                 Name
@@ -187,7 +196,7 @@
                     </template>
 
 
-                    <template if:false={opporutunityChosen}>
+                    <template if:false={opportunityChosen}>
                         <div class="slds-text-body_regular">
                             Enter an Opportunity above to display its record here.
                         </div>
@@ -203,26 +212,13 @@
                 </div>
 
                 <div class="slds-clearfix slds-box slds-box_xx-small">
-                    <template if:true={opporutunityChosen}>
+                    <template if:true={opportunityChosen}>
 
                             <template if:true={productsFromOpportunity}>
 
                                 <template for:each={productsFromOpportunity} for:item="product">
                                     <div class="slds-m-around_small slds-box slds-box_xx-small"  key={product.Id}>
                                         
-                                        <div>
-                                            <div class="slds-text-body_regular">
-                                                Opportunity Product Name
-                                            </div>
-            
-                                            <lightning-formatted-url
-                                                value={product.OpportunityLineItemURL}
-                                                label={product.OpportunityLineItemName}
-                                                target="_blank">
-                                            </lightning-formatted-url>
-                                        </div>
-
-
                                         <div class="slds-m-top_small">
                                             <div class="slds-text-body_regular">
                                                 Product Name
@@ -324,7 +320,7 @@
 
 
 
-                    <template if:false={opporutunityChosen}>
+                    <template if:false={opportunityChosen}>
                         <div class="slds-text-body_regular">
                             Enter an Opportunity above to display the products that were sold here.
                         </div>
@@ -340,7 +336,7 @@
                 </div>
 
                 <div class="slds-size_large slds-box_xx-small">
-                    <template if:true={opporutunityChosen}>
+                    <template if:true={opportunityChosen}>
                         <div class="">
                             <div class="slds-text-body_regular">
                                 Account Name
@@ -412,7 +408,7 @@
                     </template>
 
 
-                    <template if:false={opporutunityChosen}>
+                    <template if:false={opportunityChosen}>
                         <div class="slds-text-body_regular">
                             Enter an Opportunity above to display the information of the associated account here.
                         </div>

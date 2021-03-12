@@ -2,9 +2,11 @@ import { LightningElement, track } from 'lwc';
 
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
-import { NavigationMixin } from "lightning/navigation";
+import { NavigationMixin } from 'lightning/navigation';
 
 import queryFromString from '@salesforce/apex/ApexDataInterface.queryFromString';
+import updateRecordFromId from '@salesforce/apex/ApexDataInterface.updateRecordFromId';
+import insertRecord from '@salesforce/apex/ApexDataInterface.insertRecord';
 
 
 
@@ -36,7 +38,7 @@ class LWC_Element {
 
 
 export default class Votc2_main extends NavigationMixin(LightningElement) {
-    @track opporutunityChosen;
+    @track opportunityChosen;
     findOpportunityElement;
 
     surveyElements;
@@ -49,6 +51,11 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
     accountFromOpportunity;
     @track accountContactsData;
     @track accountContactsColumns;
+
+
+    // If Survey already exists then put its Id in here for when I make an insert I will call update, otherwise
+    // I will call insert
+    surveyId;
 
 
     displayError(title, errorMessage) {
@@ -68,7 +75,7 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
     handleDOMInput(event) {
         switch(event.target.getAttribute("data-id")) {
             case 'OpportunityLookup':
-                this.opporutunityChosen = this.findOpportunityElement.domElement.value;
+                this.opportunityChosen = this.findOpportunityElement.domElement.value;
 
                 this.handleOpportunityChosen();
 
@@ -130,19 +137,107 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
 
     
     handleSubmit() {
-console.log('Submit');
+        let goodToSubmit = true;
+
+        let dataIds = [
+            ['PaintCheckbox', 'PaintComments'],
+            ['AppearanceCheckbox', 'AppearanceComments'],
+            ['ElectricalCheckbox', 'ElectricalComments'],
+            ['HydraulicsCheckbox', 'HydraulicsComments'],
+            ['FunctionalityCheckbox', 'FunctionalityComments']
+        ];
+
+        try {
+            for(const index in dataIds) {
+                if(!this.surveyElements[dataIds[index][0]].domElement.checked && !this.surveyElements[dataIds[index][1]].domElement.value) {
+                    goodToSubmit = false;
+
+                    this.displayError('Error in attempt to Submit', 'Checkboxes that are unchecked must include Additional Comments, please enter an Additional Comment in any unchecked checkboxes.');
+
+                    break;
+                }
+            }
+
+
+            if(!this.surveyElements['GeneralComments'].domElement.value) {
+                goodToSubmit = false;
+
+                this.displayError('Error in attempt to Submit', 'The General Comments box cannot be blank, please enter a General Comment.');
+            }
+        }catch(err) {
+            this.displayError('Error while checking Submit criteria', err.message);
+        }
+
+
+        if(goodToSubmit) {
+            let fieldValuePairs = {
+                'Opportunity__c': this.opportunityChosen,
+
+                'Paint__c': this.surveyElements.PaintCheckbox.domElement.checked,
+                'Paint_Comment__c': this.surveyElements.PaintComments.domElement.value,
+
+                'Appearance__c': this.surveyElements.AppearanceCheckbox.domElement.checked,
+                'Appearance_Comment__c': this.surveyElements.AppearanceComments.domElement.value,
+                
+                'Electrical__c': this.surveyElements.ElectricalCheckbox.domElement.checked,
+                'Electrical_Comment__c': this.surveyElements.ElectricalComments.domElement.value,
+
+                'Unfaulty__c': this.surveyElements.HydraulicsCheckbox.domElement.checked,
+                'Unfaulty_Comment__c': this.surveyElements.HydraulicsComments.domElement.value,
+                
+                'Functionality__c': this.surveyElements.FunctionalityCheckbox.domElement.checked,
+                'Functionality_Comment__c': this.surveyElements.FunctionalityComments.domElement.value,
+
+                'Comments__c': this.surveyElements.GeneralComments.domElement.value
+            };
+
+            if(this.surveyId) {
+                updateRecordFromId({ objectName: 'VOTC_Survey__c', recordId: this.surveyId, fieldValuePairs: fieldValuePairs }).then(result => {
+                    if(result) {
+                        const successToast = new ShowToastEvent({
+                            title: 'Survey Submitted',
+                            message: 'The record was updated.',
+                            variant: 'success',
+                            mode: 'sticky'
+                        });
+                
+                        this.dispatchEvent(successToast);
+                    }
+                }).catch(err => {
+                    this.displayError('Error in call to queryFromString for VOTC_Survey__c', err.body.message);
+                });
+            }else {
+                insertRecord({ objectName: 'VOTC_Survey__c', fieldValuePairs: fieldValuePairs }).then(result => {
+                    if(result) {
+                        const successToast = new ShowToastEvent({
+                            title: 'Survey Submitted',
+                            message: 'The record was inserted.',
+                            variant: 'success',
+                            mode: 'sticky'
+                        });
+                
+                        this.dispatchEvent(successToast);
+                    }
+                }).catch(err => {
+                    this.displayError('Error in call to queryFromString for VOTC_Survey__c', err.body.message);
+                });
+            }
+        }
     }
 
 
 
     loadSurveyData() {
         queryFromString({
-            queryString: 'SELECT Appearance__c, Appearance_Comment__c, Comments__c, Electrical__c, Electrical_Comment__c, Functionality__c, Functionality_Comment__c, Opportunity__c, Paint__c, Paint_Comment__c, Unfaulty__c, Unfaulty_Comment__c' +
+            queryString: 'SELECT Id, Appearance__c, Appearance_Comment__c, Comments__c, Electrical__c, Electrical_Comment__c, Functionality__c, Functionality_Comment__c, Opportunity__c, Paint__c, Paint_Comment__c, Unfaulty__c, Unfaulty_Comment__c' +
             ' FROM VOTC_Survey__c' +
-            ' WHERE Opportunity__c=\'' + this.opporutunityChosen + '\'' +
+            ' WHERE Opportunity__c=\'' + this.opportunityChosen + '\'' +
             ' LIMIT 1'
         }).then(records => {
             if(records.length > 0) {
+                this.surveyId = records[0].Id;
+
+
                 this.surveyElements.PaintCheckbox.domElement.checked = records[0].Paint__c;
                 this.surveyElements.PaintComments.domElement.value = records[0].Paint_Comment__c;
 
@@ -171,7 +266,7 @@ console.log('Submit');
         return queryFromString({
             queryString: 'SELECT Name, Owner.Name, CloseDate, AccountId' +
             ' FROM Opportunity' +
-            ' WHERE Id=\'' + this.opporutunityChosen + '\'' +
+            ' WHERE Id=\'' + this.opportunityChosen + '\'' +
             ' LIMIT 1'
         }).then(records => {
             if(records.length > 0) {
@@ -194,7 +289,7 @@ console.log('Submit');
         queryFromString({
             queryString: 'SELECT Id, Name, Product2Id, Product2.Name, Product2.RecordType.Name, Product2.Body_Make__c, Product2.Body_Model__c, Product2.Chassis_Make__c, Product2.Chassis_Model__c, Product2.Lube_Type__c' +
             ' FROM OpportunityLineItem' +
-            ' WHERE OpportunityId=\'' + this.opporutunityChosen + '\''
+            ' WHERE OpportunityId=\'' + this.opportunityChosen + '\''
         }).then(records => {
             this.productsFromOpportunity = [];
 
@@ -203,8 +298,6 @@ console.log('Submit');
                 // Because things are Asynchronous you need to update the values all at the same time
                 // And figure out which to update with the NavigationMixIn later
                 this.productsFromOpportunity.push({
-                    OpportunityLineItemName: records[i].Name,
-
                     Product2Name: records[i].Product2.Name,
 
                     Type: records[i].Product2.RecordType.Name,
@@ -218,21 +311,6 @@ console.log('Submit');
                     Chassis_Model: records[i].Product2.Chassis_Model__c,
 
                     Lube_Type: records[i].Product2.Lube_Type__c
-                });
-
-
-
-                this[NavigationMixin.GenerateUrl]({
-                    type: "standard__recordPage",
-                    attributes: {
-                        recordId: records[i].Id,
-                        actionName: "view"
-                    }
-                }).then(url => {
-                    this.productsFromOpportunity[i].OpportunityLineItemURL = window.location.origin + url;
-
-                }).catch(err => {
-                    this.displayError('Error in then of NavigationMixIn for OpportunityLineItem', err.message);
                 });
 
 
@@ -327,7 +405,7 @@ console.log('Submit');
         this[NavigationMixin.GenerateUrl]({
             type: "standard__recordPage",
             attributes: {
-                recordId: this.opporutunityChosen,
+                recordId: this.opportunityChosen,
                 actionName: "view"
             }
         }).then(url => {
@@ -345,7 +423,7 @@ console.log('Submit');
         let url_opportunity = url.searchParams.get("c__opportunityId");
 
         if (url_opportunity) {
-            this.opporutunityChosen = url_opportunity;
+            this.opportunityChosen = url_opportunity;
 
             this.handleOpportunityChosen();
         }
@@ -425,7 +503,7 @@ console.log('Submit');
         // If we haven't chosen an opportunity yet then the findOpportunityElement is displaying
         // so go prepare it to get the chosen opportunity.
         // Otherwise, go prepare the rest of the elements as needed.
-        if(!this.opporutunityChosen) {
+        if(!this.opportunityChosen) {
             this.handleURLParameters();
 
             if(!this.findOpportunityElement.isInitialized) {
