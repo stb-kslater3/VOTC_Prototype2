@@ -49,8 +49,6 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
 
     accountElements;
     accountFromOpportunity;
-    @track accountContactsData;
-    @track accountContactsColumns;
 
 
     // If Survey already exists then put its Id in here for when I make an insert I will call update, otherwise
@@ -363,18 +361,6 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
         }).catch(err => {
             this.displayError('Error in call to queryFromString for Account', err.body.message);
         });
-
-
-        // AccountContacts data for actual contacts associated with that account
-        queryFromString({
-            queryString: 'SELECT Id, Name, Phone, Email, HasOptedOutOfEmail' +
-            ' FROM Contact' +
-            ' WHERE AccountId=\'' + this.accountFromOpportunity + '\''
-        }).then(records => {
-            this.accountContactsData = records;
-        }).catch(err => {
-            this.displayError('Error in call to queryFromString for Contact', err.body.message);
-        });
     }
 
 
@@ -474,8 +460,6 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
 
             this.accountElements.AccountName = new LWC_Element('AccountName');
 
-            this.accountElements.AccountContacts = new LWC_Element('AccountContacts');
-
             this.accountElements.AccountPhone = new LWC_Element('AccountPhone');
 
             this.accountElements.AccountBillingAddress = new LWC_Element('AccountBillingAddress');
@@ -530,13 +514,7 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
                 for(const key in this.accountElements) {
                     this.accountElements[key].queryDOM(this.template);
                 }
-
-                this.accountContactsColumns = [
-                    { label: 'Name', fieldName: 'Name', wrapText: true },
-                    { label: 'Phone', fieldName: 'Phone', type: 'phone', wrapText: true },
-                    { label: 'Email', fieldName: 'Email', type: 'email', wrapText: true },
-                    { label: 'Opted Out Email', fieldName: 'HasOptedOutOfEmail', type: 'boolean', wrapText: true }
-                ];
+                
             }
         }
         

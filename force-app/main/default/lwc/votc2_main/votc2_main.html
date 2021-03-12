@@ -155,7 +155,7 @@
                     Opportunity
                 </div>
 
-                <div class="slds-box slds-box_xx-small">
+                <div>
                     <template if:true={opportunityChosen}>
                         <div class="">
                             <div class="slds-text-body_regular">
@@ -211,7 +211,7 @@
                     Products
                 </div>
 
-                <div class="slds-clearfix slds-box slds-box_xx-small">
+                <div class="slds-clearfix">
                     <template if:true={opportunityChosen}>
 
                             <template if:true={productsFromOpportunity}>
@@ -335,7 +335,7 @@
                     Account
                 </div>
 
-                <div class="slds-size_large slds-box_xx-small">
+                <div>
                     <template if:true={opportunityChosen}>
                         <div class="">
                             <div class="slds-text-body_regular">
@@ -348,21 +348,6 @@
                                 target="_blank"
                                 data-id="AccountName">
                             </lightning-formatted-url>
-                        </div>
-
-                        <div class="slds-m-top_small">
-                            <div class="slds-text-body_regular">
-                                Account Contacts
-                            </div>
-
-                            <div style="height: 225px;">
-                                <lightning-datatable
-                                    key-field="Id"
-                                    data={accountContactsData}
-                                    columns={accountContactsColumns}
-                                    data-id="AccountContacts">
-                                </lightning-datatable>
-                            </div>
                         </div>
 
                         <div class="slds-m-top_small">
