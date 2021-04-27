@@ -224,6 +224,11 @@ export default class Votc2_main extends NavigationMixin(LightningElement) {
     }
 
 
+    handleUploadFinished(event) {
+console.log(event.detail.files);
+    }
+
+
 
     loadSurveyData() {
         queryFromString({
